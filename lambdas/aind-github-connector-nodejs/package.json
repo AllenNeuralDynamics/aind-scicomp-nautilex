@@ -1,0 +1,20 @@
+{
+  "name": "aind-github-connector",
+  "version": "1.0.0",
+  "description": "Lambda function to read/write from a github repo",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AllenNeuralDynamics/aind-scicomp-nautilex.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@octokit/rest": "^21.1.1",
+    "octokit": "^1.7.0"
+  }
+}

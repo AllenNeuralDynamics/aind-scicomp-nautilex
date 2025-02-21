@@ -93,6 +93,17 @@
         }
       },
       "post": {
+        "parameters": [
+          {
+            "name": "issueNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The issue number that is associated"
+          }
+        ],
         "summary": "Create a pull request to main with a new branch.",
         "description": "Creates a new feature branch, commits the code script to run.py, and creates a pull request to the main branch.",
         "operationId": "createPullRequest",

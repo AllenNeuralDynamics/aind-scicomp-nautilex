@@ -31,6 +31,7 @@ class Actions:
     GET_BRANCHES = "get_branches"
     GET_PULL_REQUESTS = "get_pull_requests"
     GET_ONE_PULL_REQUEST = "get_one_pull_request"
+    CREATE_PULL_REQUEST = "create_pull_request"
 
 def get_issues(event, context):
     '''Gets first page of issues'''
@@ -120,7 +121,10 @@ def lambda_handler(event, context):
         # /pull-request/{pullRequestNumber}
         elif apiPath.startswith("/pull-request/"):
             action = Actions.GET_ONE_PULL_REQUEST
-
+    elif httpMethod == "POST":
+        # /pull-request/{issueNumber}
+        if apiPath.startswith("/pull-request"):
+            action = Actions.CREATE_PULL_REQUEST
     else:
         print(f"Unsupported HTTP method: {httpMethod}")
         return {
@@ -137,6 +141,8 @@ def lambda_handler(event, context):
         response = get_branches(event, context)
     elif action == Actions.GET_PULL_REQUESTS:
         response = get_pull_requests(event, context)
+    elif action == Actions.CREATE_PULL_REQUEST:
+        response = create_pull_request(event, context)
     else:
         print(f"Unknown action: {apiPath}")
         return {

@@ -7,9 +7,9 @@ This lambda function was created as part of the Nautilex Hackathon.
 The function needs the github token for the specified repo. This should be stored in environment.
 
 ### READ ACTIONS
-- DONE: get all issues in the repo
-- DONE: get all branches in the repo
-- get all PRs to main
+- DONE: get issues in the repo
+- DONE: get branches in the repo
+- DONE: get PRs to main
 
 
 # WRITE ACTIONS

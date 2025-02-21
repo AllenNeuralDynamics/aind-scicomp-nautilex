@@ -25,6 +25,36 @@
         }
       }
     },
+    "/issues/{issueNumber}": {
+      "get": {
+        "summary": "Get a specific issue",
+        "description": "Retrieves the first page of open issues from the GitHub repository.",
+        "operationId": "getIssuesByNumber",
+        "parameters": [
+          {
+            "name": "issueNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The issue number to retrieve."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A string containing the issue in JSON format.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/branches": {
       "get": {
         "summary": "Get a list of branches",

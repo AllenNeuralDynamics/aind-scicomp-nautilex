@@ -26,6 +26,7 @@ repo = github.get_repo(REPO_NAME)
 # enum of possible actions
 class Actions:
     GET_ISSUES = "get_issues"
+    GET_ONE_ISSUE = "get_one_issue"
     GET_BRANCHES = "get_branches"
     GET_PULL_REQUESTS = "get_pull_requests"
 
@@ -33,21 +34,25 @@ def get_issues(event, context):
     '''Gets first page of issues'''
     issues = repo.get_issues(state="open")
     first_page = issues.get_page(0)
-    pprint(first_page)
     return json.dumps([issue.raw_data for issue in first_page])
+
+def get_one_issue(event, context):
+    '''Gets one issue given an issue number'''
+    # get issue number from event parameters'
+    issue_number = int(event['parameters'][0]['value'])
+    issue = repo.get_issue(issue_number)
+    return json.dumps(issue.raw_data)
 
 def get_branches(event, context):
     '''Gets first page of branches'''
     branches = repo.get_branches()
     first_page = branches.get_page(0)
-    pprint(first_page)
     return json.dumps([branch.raw_data for branch in first_page])
 
 def get_pull_requests(event, context):
     '''Gets first page of OPEN PRs'''
     pulls = repo.get_pulls(state="open")
     first_page = pulls.get_page(0)
-    pprint(first_page)
     return json.dumps([pr.raw_data for pr in first_page])
 
 def lambda_handler(event, context):
@@ -67,10 +72,16 @@ def lambda_handler(event, context):
     # Extract action from httpMethod and apiPath
     action = None
     if httpMethod == "GET":
+        # /issues
         if apiPath == "/issues":
             action = Actions.GET_ISSUES
+        # /issue/{issueNumber}
+        elif apiPath.startswith("/issue/"):
+            action = Actions.GET_ONE_ISSUE
+        # /branches
         elif apiPath == "/branches":
             action = Actions.GET_BRANCHES
+        # /pull-requests
         elif apiPath == "/pull-requests":
             action = Actions.GET_PULL_REQUESTS
     else:
@@ -83,6 +94,8 @@ def lambda_handler(event, context):
     # Perform action
     if action == Actions.GET_ISSUES:
         response = get_issues(event, context)
+    elif action == Actions.GET_ONE_ISSUE:
+        response = get_one_issue(event, context)
     elif action == Actions.GET_BRANCHES:
         response = get_branches(event, context)
     elif action == Actions.GET_PULL_REQUESTS:

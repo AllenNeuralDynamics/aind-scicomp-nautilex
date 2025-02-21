@@ -67,9 +67,8 @@ def get_one_pull_request(event, context):
 # create PR with title and body
 def create_pull_request(event, context):
     '''Creates a PR with code from event body'''
-    # get issue number from api path
-    apiPath = event['apiPath']
-    issue_number = int(apiPath.split('/')[-1])
+    # get issue number from input parameters
+    issue_number = int(event['parameters'][0]['value'])
     # get source issue
     issue = repo.get_issue(issue_number)
     issue_title = issue.title

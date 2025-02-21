@@ -51,15 +51,36 @@ def get_pull_requests(event, context):
     return json.dumps([pr.raw_data for pr in first_page])
 
 def lambda_handler(event, context):
-    ''
+    '''Main lambda handler'''
     print(f"Received lambda event: {event}")
     print(f"Received lambda context: {context}")
 
-    # expect event to have format:
-    # {
-    #   "action": "get_issues" # type of action to perform
-    # }
-    action = event.get("action")
+    # this lambda can only can be triggered by a Bedrock Agent
+    # agent = event['agent']
+    actionGroup = event['actionGroup']
+    apiPath = event['apiPath']
+    httpMethod =  event['httpMethod']
+    # parameters = event.get('parameters', [])
+    # requestBody = event.get('requestBody', {})
+
+
+    # Extract action from httpMethod and apiPath
+    action = None
+    if httpMethod == "GET":
+        if apiPath == "/issues":
+            action = Actions.GET_ISSUES
+        elif apiPath == "/branches":
+            action = Actions.GET_BRANCHES
+        elif apiPath == "/pull-requests":
+            action = Actions.GET_PULL_REQUESTS
+    else:
+        print(f"Unsupported HTTP method: {httpMethod}")
+        return {
+            "statusCode": 400,
+            "body": json.dumps(f"Unsupported HTTP method: {httpMethod}")
+        }
+    
+    # Perform action
     if action == Actions.GET_ISSUES:
         response = get_issues(event, context)
     elif action == Actions.GET_BRANCHES:
@@ -67,15 +88,31 @@ def lambda_handler(event, context):
     elif action == Actions.GET_PULL_REQUESTS:
         response = get_pull_requests(event, context)
     else:
-        print(f"Unknown action: {action}")
+        print(f"Unknown action: {apiPath}")
         return {
             "statusCode": 400,
-            "body": json.dumps(f"Unknown action: {action}")
+            "body": json.dumps(f"Unknown action: {apiPath}")
         }
-    return {
-        'statusCode': 200,
-        'body': json.dumps(response)
+
+    # this response format is requred for Bedrock agent!
+    responseBody =  {
+        "application/json": {
+            "body": response # "The API {} was called successfully!".format(apiPath)
+        }
     }
+
+    action_response = {
+        'actionGroup': actionGroup,
+        'apiPath': apiPath,
+        'httpMethod': httpMethod,
+        'httpStatusCode': 200,
+        'responseBody': responseBody
+    }
+
+    api_response = {'response': action_response, 'messageVersion': event['messageVersion']}
+    print("Response: {}".format(api_response))
+
+    return api_response
 
 
 # # local testing

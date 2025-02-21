@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import requests
 
@@ -29,6 +30,7 @@ class Actions:
     GET_ONE_ISSUE = "get_one_issue"
     GET_BRANCHES = "get_branches"
     GET_PULL_REQUESTS = "get_pull_requests"
+    GET_ONE_PULL_REQUEST = "get_one_pull_request"
 
 def get_issues(event, context):
     '''Gets first page of issues'''
@@ -54,6 +56,38 @@ def get_pull_requests(event, context):
     pulls = repo.get_pulls(state="open")
     first_page = pulls.get_page(0)
     return json.dumps([pr.raw_data for pr in first_page])
+
+def get_one_pull_request(event, context):
+    '''Gets one PR given a PR number'''
+    # get pr number from event parameters'
+    pr_number = int(event['parameters'][0]['value'])
+    pr = repo.get_issue(pr_number)
+    return json.dumps(pr.raw_data)
+
+# create PR with title and body
+def create_pull_request(event, context):
+    '''Creates a PR with code from event body'''
+    # get issue number from api path
+    apiPath = event['apiPath']
+    issue_number = int(apiPath.split('/')[-1])
+    # get source issue
+    issue = repo.get_issue(issue_number)
+    issue_title = issue.title
+    # get the code content from the event body
+    # code = event['requestBody']['code']
+    code = "print('Hello World')"
+    # create a new branch
+    # datetime stamp
+    datetime_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    branch_name = f"autofix-issue-{issue_number}-{datetime_stamp}"
+    repo.create_git_ref(ref=f"refs/heads/{branch_name}", sha=repo.get_branch("main").commit.sha)
+    # create a new folder at root/scripts/{issue_number}-{datetime_stamp}
+    folder_name = f"scripts/{issue_number}-{datetime_stamp}"
+    repo.create_file(path=f"{folder_name}/run.py", message=f"feat: add script for issue {issue_number}", content=code, branch=branch_name)
+    # create a PR
+    pr = repo.create_pull(title=f"Fix: {issue_title} ({datetime_stamp})", body=f"Auto-fix for issue {issue_number}", head=branch_name, base="main")
+    # return the PR data
+    return json.dumps(pr.raw_data)
 
 def lambda_handler(event, context):
     '''Main lambda handler'''
@@ -84,6 +118,10 @@ def lambda_handler(event, context):
         # /pull-requests
         elif apiPath == "/pull-requests":
             action = Actions.GET_PULL_REQUESTS
+        # /pull-request/{pullRequestNumber}
+        elif apiPath.startswith("/pull-request/"):
+            action = Actions.GET_ONE_PULL_REQUEST
+
     else:
         print(f"Unsupported HTTP method: {httpMethod}")
         return {

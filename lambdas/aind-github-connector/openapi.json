@@ -25,10 +25,10 @@
         }
       }
     },
-    "/issues/{issueNumber}": {
+    "/issue/{issueNumber}": {
       "get": {
         "summary": "Get a specific issue",
-        "description": "Retrieves the first page of open issues from the GitHub repository.",
+        "description": "Retrieves a specific issue from a github repository.",
         "operationId": "getIssuesByNumber",
         "parameters": [
           {
@@ -82,6 +82,64 @@
         "responses": {
           "200": {
             "description": "A string containing the list of open pull requests in JSON format.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a pull request to main with a new branch.",
+        "description": "Creates a new feature branch, commits the code script to run.py, and creates a pull request to the main branch.",
+        "operationId": "createPullRequest",
+        "requestBody": {
+          "description":"A string containing the new code content for a python script.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A string info about the new pull-request created.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pull-requests/{pullRequestNumber}": {
+      "get": {
+        "summary": "Get a specific pull request",
+        "description": "Retrieves a specific pull request from the GitHub repository.",
+        "operationId": "getPullRequestsByNumber",
+        "parameters": [
+          {
+            "name": "pullRequestNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The pull request number to retrieve."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A string containing the pull request in JSON format.",
             "content": {
               "text/plain": {
                 "schema": {

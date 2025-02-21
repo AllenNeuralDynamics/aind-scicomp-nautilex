@@ -1,0 +1,78 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+      "title": "Docdb connector API",
+      "version": "1.0.0",
+      "description": "API for calling docdb count, aggregate and filter endpoints."
+    },
+    "paths": {
+      "/count": {
+        "get": {
+          "summary": "Get a list of collections",
+          "description": "Retrieves the first page of open issues from the GitHub repository.",
+          "operationId": "getIssues",
+          "responses": {
+            "200": {
+              "description": "A string containing the list of open issues in JSON format.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/filter": {
+        "get": {
+          "summary": "Get a specific issue",
+          "description": "Retrieves a specific issue from a github repository.",
+          "operationId": "getIssuesByNumber",
+          "parameters": [
+            {
+              "name": "issueNumber",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              },
+              "description": "The issue number to retrieve."
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "A string containing the issue in JSON format.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/aggregate": {
+        "get": {
+          "summary": "Get a list of branches",
+          "description": "Retrieves the first page of branches from the GitHub repository.",
+          "operationId": "getBranches",
+          "responses": {
+            "200": {
+              "description": "A string containing the list of branches in JSON format.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+}

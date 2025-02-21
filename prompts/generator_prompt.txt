@@ -1,0 +1,76 @@
+Your job is to pull a specific github issue describing a problem in the metadata document database. Your job is to propose a solution to the issue, using the aind-data-migration-utils package to wrap your solution. 
+
+Read the issue very carefully and make sure to re-use queries and fixing code from the query wherever possible. Make sure to use your knowledge bases to understand the schema format for the aind-data-schema package. Be very careful that you modify the correct field in the schema to make your repair.
+
+You will need to provide a run.py file, here's an example of what it might look like:
+
+from aind_data_migration_utils.migrate import Migrator
+import pandas as pd
+import boto3
+import json
+import argparse
+import logging
+
+s3 = boto3.client('s3')
+mangled_data = pd.read_csv('results_mangled.csv')
+
+
+def repair_processing(record: dict) -> dict:
+    """ Pull the record's original processing data from the original data source"""
+
+    location = record['location']
+
+    # location looks like s3://codeocean-s3datasetsbucket-1u41qdg42ur9/d48ec453-4cd6-47b7-8ad0-c08176bb42c1
+    # separate the bucket and key prefix
+    bucket_name, object_key = location.split('/')[2], '/'.join(location.split('/')[3:])
+
+    # add the processing json
+    object_key = object_key + '/processing.json'
+
+    response = s3.get_object(Bucket=bucket_name, Key=object_key)
+
+    # Check that the response succeeded
+    if response['ResponseMetadata']['HTTPStatusCode'] != 200:
+        raise ValueError(f"Failed to retrieve processing data from {location}")
+
+    # # Read and parse JSON content
+    json_content = response['Body'].read().decode('utf-8')  # Read and decode bytes
+    processing_data = json.loads(json_content)  # Convert JSON string to dictionary
+
+    logging.info(f"Retrieved processing data from {location} for record {record['_id']}")
+
+    record["processing"] = processing_data
+
+    return record
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dev", action=argparse.BooleanOptionalAction, required=False, default=False)
+    parser.add_argument("--full-run", action=argparse.BooleanOptionalAction, required=False, default=False)
+    parser.add_argument("--test", action=argparse.BooleanOptionalAction, required=False, default=False)
+    args = parser.parse_args()
+
+    # Split into batches of 100 mangled records
+    for i in range(0, len(mangled_data), 150):
+        mangled_data_batch = mangled_data[i:i + 150]
+        query = {
+            "_id": {"$in": mangled_data_batch['record_id'].tolist()}
+        }
+        migrator = Migrator(
+            query=query,
+            migration_callback=repair_processing,
+            files=["processing"],
+            path=f"./{i}_repair_processing",
+            prod=not args.dev,
+        )
+
+        # Run the dry run
+        migrator.run(full_run=False, test_mode=args.test)
+
+        # If requested, run the full run
+        if args.full_run:
+            migrator.run(full_run=True, test_mode=args.test)
+
+
+Your metadata_callback should modify the response dictionary for a single record to fix the error identified in the github issue. Provide a `run.py` script that uses a query, a metadata_callback, and a files list (to filter to just the core files you are modifying). Do not provide any other response other than the run.py file.

@@ -34,21 +34,21 @@ def get_issues(event, context):
     issues = repo.get_issues(state="open")
     first_page = issues.get_page(0)
     pprint(first_page)
-    return first_page
+    return json.dumps([issue.raw_data for issue in first_page])
 
 def get_branches(event, context):
     '''Gets first page of branches'''
     branches = repo.get_branches()
     first_page = branches.get_page(0)
     pprint(first_page)
-    return first_page
+    return json.dumps([branch.raw_data for branch in first_page])
 
 def get_pull_requests(event, context):
     '''Gets first page of OPEN PRs'''
     pulls = repo.get_pulls(state="open")
     first_page = pulls.get_page(0)
     pprint(first_page)
-    return first_page
+    return json.dumps([pr.raw_data for pr in first_page])
 
 def lambda_handler(event, context):
     ''

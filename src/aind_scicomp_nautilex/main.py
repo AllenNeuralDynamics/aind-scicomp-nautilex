@@ -157,23 +157,29 @@ def analyze_issues_with_bedrock(issues: List[Dict], system_prompt: str) -> List[
         issue_content = f"Title: {issue['title']}\nBody: {issue['body']}"
         
         # Prepare the prompt
-        prompt = f"{system_prompt}\n\nIssue Content:\n{issue_content}"
+        combined_prompt = f"{system_prompt}\n\nIssue Content:\n{issue_content}"
         
         # Call Bedrock Claude
         body = {
-            "prompt": f"\n\nHuman: {prompt}\n\nAssistant:",
-            "max_tokens_to_sample": 100000,
-            "temperature": 0.5,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": combined_prompt
+                }
+            ],
+            "max_tokens": 100000,
+            "temperature": 1,
+            "top_p": 0.999,
             "anthropic_version": "bedrock-2023-05-31"
         }
         
         response = bedrock.invoke_model(
-            modelId="anthropic.claude-v2",
+            modelId="anthropic.claude-3-sonnet-20240229-v1:0",
             body=json.dumps(body)
         )
         
         response_body = json.loads(response['body'].read())
-        run_py_str = response_body['completion']
+        run_py_str = response_body['content'][0]['text']  # Updated response parsing
         responses.append(run_py_str)
         
     return responses

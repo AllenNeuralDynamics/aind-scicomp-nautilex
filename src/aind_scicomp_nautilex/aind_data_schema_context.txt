@@ -1,0 +1,1411 @@
+Model: AindCoreModel
+  - describedBy: str (default=..., )
+  - schema_version: str (default=..., pattern='^\\d+.\\d+.\\d+$', description='schema version', title='Version', frozen=True)
+
+Model: Funding
+  - funder: Organization.FUNDERS (default=..., title='Funder')
+  - grant_number: Optional[str] (default=, default=None, title='Grant number')
+  - fundee: Optional[str] (default=, default=None, title='Fundee', description='Person(s) funded by this mechanism')
+
+Model: RelatedData
+  - related_data_path: str (default=..., title='Related data path')
+  - relation: str (default=..., title='Relation', description='Relation of data to this asset')
+
+Model: DataDescription
+  - describedBy: str (default=, default=_DESCRIBED_BY_URL, json_schema_extra={'const': _DESCRIBED_BY_URL})
+  - schema_version: SkipValidation[Literal['1.0.4']] (default=, default='1.0.4')
+  - license: Literal['CC-BY-4.0'] (default='CC-BY-4.0', title='License')
+  - platform: Platform.ONE_OF (default=..., description='Name for a standardized primary data collection system', title='Platform')
+  - subject_id: str (default=..., pattern=DataRegex.NO_UNDERSCORES.value, description='Unique identifier for the subject of data acquisition', title='Subject ID')
+  - creation_time: AwareDatetimeWithDefault (default=..., description='Time that data files were created, used to uniquely identify the data', title='Creation Time')
+  - label: Optional[str] (default=, default=None, description='A short name for the data, used in file names and labels', title='Label')
+  - name: Optional[str] (default=, default=None, description='Name of data, conventionally also the name of the directory containing all data and metadata', title='Name', validate_default=True)
+  - institution: Organization.RESEARCH_INSTITUTIONS (default=..., description='An established society, corporation, foundation or other organization that collected this data', title='Institution')
+  - funding_source: List[Funding] (default=..., title='Funding source', description="Funding source. If internal funding, select 'Allen Institute'", min_length=1)
+  - data_level: DataLevel (default=..., description='level of processing that data has undergone', title='Data Level')
+  - group: Optional[Group] (default=, default=None, description='A short name for the group of individuals that collected this data', title='Group')
+  - investigators: List[PIDName] (default=..., description='Full name(s) of key investigators (e.g. PI, lead scientist, contact person)', title='Investigators', min_length=1)
+  - project_name: Optional[str] (default=, default=None, pattern=DataRegex.NO_SPECIAL_CHARS_EXCEPT_SPACE.value, description='A name for a set of coordinated activities intended to achieve one or more objectives.', title='Project Name')
+  - restrictions: Optional[str] (default=, default=None, description='Detail any restrictions on publishing or sharing these data', title='Restrictions')
+  - modality: List[Modality.ONE_OF] (default=..., description='A short name for the specific manner, characteristic, pattern of application, or the employmentof any technology or formal procedure to generate data for a study', title='Modality')
+  - related_data: List[RelatedData] (default=, default=[], title='Related data', description='Path and description of data assets associated with this asset (eg. reference images)')
+  - data_summary: Optional[str] (default=, default=None, title='Data summary', description='Semantic summary of experimental goal')
+
+Model: DerivedDataDescription
+  - input_data_name: str
+  - data_level: Literal[DataLevel.DERIVED] (default=, default=DataLevel.DERIVED, description='level of processing that data has undergone', title='Data Level')
+  - process_name: Optional[str] (default=, default=None, pattern=DataRegex.NO_SPECIAL_CHARS.value, description='Name of the process that created the data', title='Process name')
+
+Model: RawDataDescription
+  - data_level: Literal[DataLevel.RAW] (default=, default=DataLevel.RAW, description='level of processing that data has undergone', title='Data Level')
+
+Model: AnalysisDescription
+  - data_level: Literal[DataLevel.DERIVED] (default=DataLevel.DERIVED, description='Level of processing that data has undergone', title='Data Level')
+  - project_name: str (default=..., pattern=DataRegex.NO_SPECIAL_CHARS.value, description='Name of the project the analysis belongs to', title='Project name')
+  - analysis_name: str (default=..., pattern=DataRegex.NO_SPECIAL_CHARS.value, description='Name of the analysis performed', title='Analysis name')
+
+Model: QCStatus
+  - evaluator: str (default=..., title='Status evaluator full name')
+  - status: Status (default=..., title='Status')
+  - timestamp: AwareDatetimeWithDefault (default=..., title='Status date')
+
+Model: QCMetric
+  - name: str (default=..., title='Metric name')
+  - value: Any (default=..., title='Metric value')
+  - status_history: List[QCStatus] (default=, default=[], title='Metric status history')
+  - description: Optional[str] (default=, default=None, title='Metric description')
+  - reference: Optional[str] (default=, default=None, title='Metric reference image URL or plot type')
+  - evaluated_assets: Optional[List[str]] (default=, default=None, title='List of asset names that this metric depends on', description="Set to None except when a metric's calculation required data coming from a different data asset.")
+
+Model: QCEvaluation
+  - modality: Modality.ONE_OF (default=..., title='Modality')
+  - stage: Stage (default=..., title='Evaluation stage')
+  - name: str (default=..., title='Evaluation name')
+  - description: Optional[str] (default=, default=None, title='Evaluation description')
+  - metrics: List[QCMetric] (default=..., title='QC metrics')
+  - tags: Optional[List[str]] (default=, default=None, title='Tags', description='Tags can be used to group QCEvaluation objects into groups')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+  - allow_failed_metrics: bool (default=, default=False, title='Allow metrics to fail', description='Set to true for evaluations that are not critical to the overall state of QC for a data asset, this will allow individual metrics to fail while still passing the evaluation.')
+  - latest_status: Status (default=, default=None, title='Evaluation status')
+  - created: AwareDatetimeWithDefault (default=, default_factory=lambda : datetime.now(tz=timezone.utc), title='Evaluation creation date')
+
+Model: QualityControl
+  - describedBy: str (default=, default=_DESCRIBED_BY_URL, json_schema_extra={'const': _DESCRIBED_BY_URL})
+  - schema_version: SkipValidation[Literal['1.2.2']] (default=, default='1.2.2')
+  - evaluations: List[QCEvaluation] (default=..., title='Evaluations')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: Metadata
+  - describedBy: str (default=, default=_DESCRIBED_BY_URL, json_schema_extra={'const': _DESCRIBED_BY_URL})
+  - schema_version: SkipValidation[Literal['1.1.2']] (default=, default='1.1.2')
+  - id: UUID (default=, default_factory=uuid4, alias='_id', title='Data Asset ID', description='The unique id of the data asset.')
+  - name: str (default=..., description='Name of the data asset.', title='Data Asset Name')
+  - created: AwareDatetimeWithDefault (default=, default_factory=lambda : datetime.now(tz=timezone.utc), title='Created', description='The utc date and time the data asset created.')
+  - last_modified: AwareDatetimeWithDefault (default=, default_factory=lambda : datetime.now(tz=timezone.utc), title='Last Modified', description='The utc date and time that the data asset was last modified.')
+  - location: str (default=..., title='Location', description='Current location of the data asset.')
+  - metadata_status: MetadataStatus (default=, default=MetadataStatus.UNKNOWN, title=' Metadata Status', description='The status of the metadata.')
+  - external_links: Dict[ExternalPlatforms, List[str]] (default=, default=dict(), title='External Links', description='Links to the data asset on different platforms.')
+  - subject: Optional[Subject] (default=, default=None, title='Subject', description='Subject of data collection.')
+  - data_description: Optional[DataDescription] (default=, default=None, title='Data Description', description='A logical collection of data files.')
+  - procedures: Optional[Procedures] (default=, default=None, title='Procedures', description='All procedures performed on a subject.')
+  - session: Optional[Session] (default=, default=None, title='Session', description='Description of a session.')
+  - rig: Optional[Rig] (default=, default=None, title='Rig', description='Rig.')
+  - processing: Optional[Processing] (default=, default=None, title='Processing', description='All processes run on data.')
+  - acquisition: Optional[Acquisition] (default=, default=None, title='Acquisition', description='Imaging acquisition session')
+  - instrument: Optional[Instrument] (default=, default=None, title='Instrument', description='Instrument, which is a collection of devices')
+  - quality_control: Optional[QualityControl] (default=, default=None, title='Quality Control', description='Description of quality metrics for a data asset')
+
+Model: LightCycle
+  - lights_on_time: time (default=..., description='Time in UTC that lights were turned on', title='Lights on time')
+  - lights_off_time: time (default=..., description='Time in UTC that lights were turned off', title='Lights off time')
+
+Model: WellnessReport
+  - date: date_type (default=..., title='Date')
+  - report: str (default=..., title='Report')
+
+Model: Housing
+  - cage_id: Optional[str] (default=, default=None, title='Cage ID')
+  - room_id: Optional[str] (default=, default=None, title='Room ID')
+  - light_cycle: Optional[LightCycle] (default=, default=None, title='Light cycle')
+  - home_cage_enrichment: List[HomeCageEnrichment] (default=, default=[], title='Home cage enrichment')
+  - cohoused_subjects: List[str] (default=, default=[], title='Co-housed subjects', description='List of IDs of other subjects housed in same cage')
+
+Model: BreedingInfo
+  - breeding_group: str (default=..., title='Breeding Group')
+  - maternal_id: str (default=..., title='Maternal specimen ID')
+  - maternal_genotype: str (default=..., title='Maternal genotype')
+  - paternal_id: str (default=..., title='Paternal specimen ID')
+  - paternal_genotype: str (default=..., title='Paternal genotype')
+
+Model: Subject
+  - describedBy: str (default=, default=_DESCRIBED_BY_URL, json_schema_extra={'const': _DESCRIBED_BY_URL})
+  - schema_version: SkipValidation[Literal['1.0.3']] (default=, default='1.0.3')
+  - subject_id: str (default=..., description='Unique identifier for the subject. If this is not a Allen LAS ID, indicate this in the Notes.', title='Subject ID')
+  - sex: Sex (default=..., title='Sex')
+  - date_of_birth: date_type (default=..., title='Date of birth')
+  - genotype: Optional[str] (default=, default=None, description='Genotype of the animal providing both alleles', title='Genotype')
+  - species: Species.ONE_OF (default=..., title='Species')
+  - alleles: List[PIDName] (default=, default=[], title='Alleles', description='Allele names and persistent IDs')
+  - background_strain: Optional[BackgroundStrain] (default=, default=None, title='Background strain')
+  - breeding_info: Optional[BreedingInfo] (default=, default=None, title='Breeding Info')
+  - source: Organization.SUBJECT_SOURCES (default=..., description='Where the subject was acquired from. If bred in-house, use Allen Institute.', title='Source')
+  - rrid: Optional[PIDName] (default=, default=None, description='RRID of mouse if acquired from supplier', title='RRID')
+  - restrictions: Optional[str] (default=, default=None, description='Any restrictions on use or publishing based on subject source', title='Restrictions')
+  - wellness_reports: List[WellnessReport] (default=, default=[], title='Wellness Report')
+  - housing: Optional[Housing] (default=, default=None, title='Housing')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: FiberConnectionConfig
+  - patch_cord_name: str (default=..., title='Patch cord name (must match rig)')
+  - patch_cord_output_power: Decimal (default=..., title='Output power (uW)')
+  - output_power_unit: PowerUnit (default=, default=PowerUnit.UW, title='Output power unit')
+  - fiber_name: str (default=..., title='Fiber name (must match procedure)')
+  - channel: Channel (default=..., title='Channel')
+
+Model: DetectorConfig
+  - name: str (default=..., title='Name')
+  - exposure_time: Decimal (default=..., title='Exposure time (ms)')
+  - exposure_time_unit: TimeUnit (default=, default=TimeUnit.MS, title='Exposure time unit')
+  - trigger_type: TriggerType (default=..., title='Trigger type')
+
+Model: LightEmittingDiodeConfig
+  - device_type: Literal['Light emitting diode']
+  - name: str (default=..., title='Name')
+  - excitation_power: Optional[Decimal] (default=, default=None, title='Excitation power (mW)')
+  - excitation_power_unit: PowerUnit (default=, default=PowerUnit.MW, title='Excitation power unit')
+
+Model: FieldOfView
+  - index: int (default=..., title='Index')
+  - imaging_depth: int (default=..., title='Imaging depth (um)')
+  - imaging_depth_unit: SizeUnit (default=, default=SizeUnit.UM, title='Imaging depth unit')
+  - targeted_structure: CCFStructure.ONE_OF (default=..., title='Targeted structure')
+  - fov_coordinate_ml: Decimal (default=..., title='FOV coordinate ML')
+  - fov_coordinate_ap: Decimal (default=..., title='FOV coordinate AP')
+  - fov_coordinate_unit: SizeUnit (default=, default=SizeUnit.UM, title='FOV coordinate unit')
+  - fov_reference: str (default=..., title='FOV reference', description='Reference for ML/AP coordinates')
+  - fov_width: int (default=..., title='FOV width (pixels)')
+  - fov_height: int (default=..., title='FOV height (pixels)')
+  - fov_size_unit: SizeUnit (default=, default=SizeUnit.PX, title='FOV size unit')
+  - magnification: str (default=..., title='Magnification')
+  - fov_scale_factor: Decimal (default=..., title='FOV scale factor (um/pixel)')
+  - fov_scale_factor_unit: str (default=, default='um/pixel', title='FOV scale factor unit')
+  - frame_rate: Optional[Decimal] (default=, default=None, title='Frame rate (Hz)')
+  - frame_rate_unit: FrequencyUnit (default=, default=FrequencyUnit.HZ, title='Frame rate unit')
+  - coupled_fov_index: Optional[int] (default=, default=None, title='Coupled FOV', description='Coupled planes for multiscope')
+  - power: Optional[Decimal] (default=, default=None, title='Power', description='For coupled planes, this power is shared by both planes')
+  - power_unit: PowerUnit (default=, default=PowerUnit.PERCENT, title='Power unit')
+  - power_ratio: Optional[Decimal] (default=, default=None, title='Power ratio for coupled planes')
+  - scanfield_z: Optional[int] (default=, default=None, title='Z stage position of the fastz actuator for a given targeted depth')
+  - scanfield_z_unit: SizeUnit (default=, default=SizeUnit.UM, title='Z stage position unit')
+  - scanimage_roi_index: Optional[int] (default=, default=None, title='ScanImage ROI index')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: StackChannel
+  - start_depth: int (default=..., title='Starting depth (um)')
+  - end_depth: int (default=..., title='Ending depth (um)')
+  - depth_unit: SizeUnit (default=, default=SizeUnit.UM, title='Depth unit')
+
+Model: Stack
+  - channels: List[StackChannel] (default=..., title='Channels')
+  - number_of_planes: int (default=..., title='Number of planes')
+  - step_size: float (default=..., title='Step size (um)')
+  - step_size_unit: SizeUnit (default=, default=SizeUnit.UM, title='Step size unit')
+  - number_of_plane_repeats_per_volume: int (default=..., title='Number of repeats per volume')
+  - number_of_volume_repeats: int (default=..., title='Number of volume repeats')
+  - fov_coordinate_ml: float (default=..., title='FOV coordinate ML')
+  - fov_coordinate_ap: float (default=..., title='FOV coordinate AP')
+  - fov_coordinate_unit: SizeUnit (default=, default=SizeUnit.UM, title='FOV coordinate unit')
+  - fov_reference: str (default=..., title='FOV reference', description='Reference for ML/AP coordinates')
+  - fov_width: int (default=..., title='FOV width (pixels)')
+  - fov_height: int (default=..., title='FOV height (pixels)')
+  - fov_size_unit: SizeUnit (default=, default=SizeUnit.PX, title='FOV size unit')
+  - magnification: Optional[str] (default=, default=None, title='Magnification')
+  - fov_scale_factor: float (default=..., title='FOV scale factor (um/pixel)')
+  - fov_scale_factor_unit: str (default=, default='um/pixel', title='FOV scale factor unit')
+  - frame_rate: Decimal (default=..., title='Frame rate (Hz)')
+  - frame_rate_unit: FrequencyUnit (default=, default=FrequencyUnit.HZ, title='Frame rate unit')
+  - targeted_structure: Optional[CCFStructure.ONE_OF] (default=, default=None, title='Targeted structure')
+
+Model: SlapFieldOfView
+  - session_type: SlapSessionType (default=..., title='Session type')
+  - dmd_dilation_x: int (default=..., title='DMD Dilation X (pixels)')
+  - dmd_dilation_y: int (default=..., title='DMD Dilation Y (pixels)')
+  - dilation_unit: SizeUnit (default=, default=SizeUnit.PX, title='Dilation unit')
+  - target_neuron: Optional[str] (default=, default=None, title='Target neuron')
+  - target_branch: Optional[str] (default=, default=None, title='Target branch')
+  - path_to_array_of_frame_rates: str (default=..., title='Array of frame rates')
+
+Model: DomeModule
+  - assembly_name: str (default=..., title='Assembly name')
+  - arc_angle: Decimal (default=..., title='Arc Angle (deg)')
+  - module_angle: Decimal (default=..., title='Module Angle (deg)')
+  - angle_unit: AngleUnit (default=, default=AngleUnit.DEG, title='Angle unit')
+  - rotation_angle: Optional[Decimal] (default=, default=None, title='Rotation Angle (deg)')
+  - coordinate_transform: Optional[str] (default=, default=None, title='Transform from local manipulator axes to rig', description='Path to coordinate transform')
+  - calibration_date: Optional[datetime] (default=, default=None, title='Date on which coordinate transform was last calibrated')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: ManipulatorModule
+  - primary_targeted_structure: CCFStructure.ONE_OF (default=..., title='Targeted structure')
+  - other_targeted_structure: Optional[List[CCFStructure.ONE_OF]] (default=, default=None, title='Other targeted structure')
+  - targeted_ccf_coordinates: List[CcfCoords] (default=, default=[], title='Targeted CCF coordinates')
+  - manipulator_coordinates: Coordinates3d (default=..., title='Manipulator coordinates')
+  - anatomical_coordinates: Optional[Coordinates3d] (default=, default=None, title='Anatomical coordinates')
+  - anatomical_reference: Optional[Literal[CoordinateReferenceLocation.BREGMA, CoordinateReferenceLocation.LAMBDA]] (default=, default=None, title='Anatomical coordinate reference')
+  - surface_z: Optional[Decimal] (default=, default=None, title='Surface z')
+  - surface_z_unit: SizeUnit (default=, default=SizeUnit.UM, title='Surface z unit')
+  - dye: Optional[str] (default=, default=None, title='Dye')
+  - implant_hole_number: Optional[int] (default=, default=None, title='Implant hole number')
+
+Model: FiberModule
+  - fiber_connections: List[FiberConnectionConfig] (default=, default=[], title='Fiber photometry devices')
+
+Model: LaserConfig
+  - device_type: Literal['Laser']
+  - name: str (default=..., title='Name', description='Must match rig json')
+  - wavelength: int (default=..., title='Wavelength (nm)')
+  - wavelength_unit: SizeUnit (default=, default=SizeUnit.NM, title='Wavelength unit')
+  - excitation_power: Optional[Decimal] (default=, default=None, title='Excitation power (mW)')
+  - excitation_power_unit: PowerUnit (default=, default=PowerUnit.MW, title='Excitation power unit')
+
+Model: RewardSpoutConfig
+  - side: SpoutSide (default=..., title='Spout side', description='Must match rig')
+  - starting_position: RelativePosition (default=..., title='Starting position')
+  - variable_position: bool (default=..., title='Variable position', description='True if spout position changes during session as tracked in data')
+
+Model: RewardDeliveryConfig
+  - reward_solution: RewardSolution (default=..., title='Reward solution', description='If Other use notes')
+  - reward_spouts: List[RewardSpoutConfig] (default=..., title='Reward spouts')
+  - notes: Optional[str] (default=, default=None, title='Notes', validate_default=True)
+
+Model: SpeakerConfig
+  - name: str (default=..., title='Name', description='Must match rig json')
+  - volume: Optional[Decimal] (default=, default=None, title='Volume (dB)')
+  - volume_unit: SoundIntensityUnit (default=, default=SoundIntensityUnit.DB, title='Volume unit')
+
+Model: MRIScan
+  - scan_index: int (default=..., title='Scan index')
+  - scan_type: ScanType (default=..., title='Scan type')
+  - primary_scan: bool (default=..., title='Primary scan', description='Indicates the primary scan used for downstream analysis')
+  - mri_scanner: Optional[Scanner] (default=, default=None, title='MRI scanner')
+  - scan_sequence_type: MriScanSequence (default=..., title='Scan sequence')
+  - rare_factor: Optional[int] (default=, default=None, title='RARE factor')
+  - echo_time: Decimal (default=..., title='Echo time (ms)')
+  - effective_echo_time: Optional[Decimal] (default=, default=None, title='Effective echo time (ms)')
+  - echo_time_unit: TimeUnit (default=, default=TimeUnit.MS, title='Echo time unit')
+  - repetition_time: Decimal (default=..., title='Repetition time (ms)')
+  - repetition_time_unit: TimeUnit (default=, default=TimeUnit.MS, title='Repetition time unit')
+  - vc_orientation: Optional[Rotation3dTransform] (default=, default=None, title='Scan orientation')
+  - vc_position: Optional[Translation3dTransform] (default=, default=None, title='Scan position')
+  - subject_position: SubjectPosition (default=..., title='Subject position')
+  - voxel_sizes: Optional[Scale3dTransform] (default=, default=None, title='Voxel sizes', description='Resolution')
+  - processing_steps: List[Literal[ProcessName.FIDUCIAL_SEGMENTATION, ProcessName.IMAGE_ATLAS_ALIGNMENT, ProcessName.SKULL_STRIPPING]] (default=[], )
+  - additional_scan_parameters: AindGenericType (default=..., title='Parameters')
+  - notes: Optional[str] (default=, default=None, title='Notes', validate_default=True)
+
+Model: Stream
+  - stream_start_time: AwareDatetimeWithDefault (default=..., title='Stream start time')
+  - stream_end_time: AwareDatetimeWithDefault (default=..., title='Stream stop time')
+  - daq_names: List[str] (default=, default=[], title='DAQ devices')
+  - camera_names: List[str] (default=, default=[], title='Cameras')
+  - light_sources: List[LIGHT_SOURCE_CONFIGS] (default=, default=[], title='Light Sources')
+  - ephys_modules: List[ManipulatorModule] (default=, default=[], title='Ephys modules')
+  - stick_microscopes: List[DomeModule] (default=, default=[], title='Stick microscopes', description='Must match stick microscope assemblies in rig file')
+  - manipulator_modules: List[ManipulatorModule] (default=, default=[], title='Manipulator modules')
+  - detectors: List[DetectorConfig] (default=, default=[], title='Detectors')
+  - fiber_connections: List[FiberConnectionConfig] (default=, default=[], title='Implanted fiber photometry devices')
+  - fiber_modules: List[FiberModule] (default=, default=[], title='Inserted fiber modules')
+  - ophys_fovs: List[FieldOfView] (default=, default=[], title='Fields of view')
+  - slap_fovs: List[SlapFieldOfView] (default=, default=[], title='Slap2 fields of view')
+  - stack_parameters: Optional[Stack] (default=, default=None, title='Stack parameters')
+  - mri_scans: List[MRIScan] (default=, default=[], title='MRI scans')
+  - stream_modalities: List[Modality.ONE_OF] (default=..., title='Modalities')
+  - software: Optional[List[Software]] (default=, default=[], title='Data stream software information')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: StimulusEpoch
+  - stimulus_start_time: AwareDatetimeWithDefault (default=..., title='Stimulus start time', description='When a specific stimulus begins. This might be the same as the session start time.')
+  - stimulus_end_time: AwareDatetimeWithDefault (default=..., title='Stimulus end time', description='When a specific stimulus ends. This might be the same as the session end time.')
+  - stimulus_name: str (default=..., title='Stimulus name')
+  - session_number: Optional[int] (default=, default=None, title='Session number')
+  - software: Optional[List[Software]] (default=, default=[], title='Software', description='The software used to control the behavior/stimulus (e.g. Bonsai)')
+  - script: Optional[Software] (default=, default=None, title='Script', description='provide URL to the commit of the script and the parameters used')
+  - stimulus_modalities: List[StimulusModality] (default=..., title='Stimulus modalities')
+  - stimulus_parameters: Optional[List[Annotated[Union[AuditoryStimulation, OptoStimulation, OlfactoryStimulation, PhotoStimulation, VisualStimulation], Field(discriminator='stimulus_type')]]] (default=, default=None, title='Stimulus parameters')
+  - stimulus_device_names: List[str] (default=, default=[], title='Stimulus devices')
+  - speaker_config: Optional[SpeakerConfig] (default=, default=None, title='Speaker Config')
+  - light_source_config: Optional[List[LIGHT_SOURCE_CONFIGS]] (default=, default=[], title='Light source config', description='Light sources for stimulation')
+  - objects_in_arena: Optional[List[str]] (default=, default=None, title='Objects in arena')
+  - output_parameters: AindGenericType (default=, default=AindGeneric(), title='Performance metrics')
+  - reward_consumed_during_epoch: Optional[Decimal] (default=, default=None, title='Reward consumed during training (uL)')
+  - reward_consumed_unit: VolumeUnit (default=, default=VolumeUnit.UL, title='Reward consumed unit')
+  - trials_total: Optional[int] (default=, default=None, title='Total trials')
+  - trials_finished: Optional[int] (default=, default=None, title='Finished trials')
+  - trials_rewarded: Optional[int] (default=, default=None, title='Rewarded trials')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: Session
+  - describedBy: str (default=, default=_DESCRIBED_BY_URL, json_schema_extra={'const': _DESCRIBED_BY_URL})
+  - schema_version: SkipValidation[Literal['1.1.1']] (default=, default='1.1.1')
+  - protocol_id: List[str] (default=, default=[], title='Protocol ID', description='DOI for protocols.io')
+  - experimenter_full_name: List[str] (default=..., description='First and last name of the experimenter(s).', title='Experimenter(s) full name')
+  - session_start_time: AwareDatetimeWithDefault (default=..., title='Session start time')
+  - session_end_time: Optional[AwareDatetimeWithDefault] (default=, default=None, title='Session end time')
+  - session_type: str (default=..., title='Session type')
+  - iacuc_protocol: Optional[str] (default=, default=None, title='IACUC protocol')
+  - rig_id: str (default=..., title='Rig ID')
+  - calibrations: List[Calibration] (default=, default=[], title='Calibrations', description='Calibrations of rig devices prior to session')
+  - maintenance: List[Maintenance] (default=, default=[], title='Maintenance', description='Maintenance of rig devices prior to session')
+  - subject_id: str (default=..., title='Subject ID')
+  - animal_weight_prior: Optional[Decimal] (default=, default=None, title='Animal weight (g)', description='Animal weight before procedure')
+  - animal_weight_post: Optional[Decimal] (default=, default=None, title='Animal weight (g)', description='Animal weight after procedure')
+  - weight_unit: MassUnit (default=, default=MassUnit.G, title='Weight unit')
+  - anaesthesia: Optional[Anaesthetic] (default=, default=None, title='Anaesthesia')
+  - data_streams: List[Stream] (default=..., title='Data streams', description='A data stream is a collection of devices that are recorded simultaneously. Each session can include multiple streams (e.g., if the manipulators are moved to a new location)')
+  - stimulus_epochs: List[StimulusEpoch] (default=, default=[], title='Stimulus')
+  - mouse_platform_name: str (default=..., title='Mouse platform')
+  - active_mouse_platform: bool (default=..., title='Active mouse platform', description='Is the mouse platform being actively controlled')
+  - headframe_registration: Optional[Affine3dTransform] (default=, default=None, title='Headframe registration', description='MRI transform matrix for headframe')
+  - reward_delivery: Optional[RewardDeliveryConfig] (default=, default=None, title='Reward delivery')
+  - reward_consumed_total: Optional[Decimal] (default=, default=None, title='Total reward consumed (mL)')
+  - reward_consumed_unit: VolumeUnit (default=, default=VolumeUnit.ML, title='Reward consumed unit')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: Rig
+  - describedBy: str (default=, default=_DESCRIBED_BY_URL, json_schema_extra={'const': _DESCRIBED_BY_URL})
+  - schema_version: SkipValidation[Literal['1.0.4']] (default=, default='1.0.4')
+  - rig_id: str (default=..., description='Unique rig identifier, name convention: <room>-<apparatus name>-<date modified YYYYMMDD>', title='Rig ID', pattern=RIG_ID_PATTERN)
+  - modification_date: date (default=..., title='Date of modification')
+  - mouse_platform: MOUSE_PLATFORMS
+  - stimulus_devices: List[STIMULUS_DEVICES] (default=, default=[], title='Stimulus devices')
+  - cameras: List[CameraAssembly] (default=, default=[], title='Camera assemblies')
+  - enclosure: Optional[Enclosure] (default=, default=None, title='Enclosure')
+  - ephys_assemblies: List[EphysAssembly] (default=, default=[], title='Ephys probes')
+  - fiber_assemblies: List[FiberAssembly] (default=, default=[], title='Inserted fiber optics')
+  - stick_microscopes: List[CameraAssembly] (default=, default=[], title='Stick microscopes')
+  - laser_assemblies: List[LaserAssembly] (default=, default=[], title='Laser modules')
+  - patch_cords: List[Patch] (default=, default=[], title='Patch cords')
+  - light_sources: List[LIGHT_SOURCES] (default=, default=[], title='Light sources')
+  - detectors: List[Detector] (default=, default=[], title='Detectors')
+  - objectives: List[Objective] (default=, default=[], title='Objectives')
+  - filters: List[Filter] (default=, default=[], title='Filters')
+  - lenses: List[Lens] (default=, default=[], title='Lenses')
+  - digital_micromirror_devices: List[DigitalMicromirrorDevice] (default=, default=[], title='DMDs')
+  - polygonal_scanners: List[PolygonalScanner] (default=, default=[], title='Polygonal scanners')
+  - pockels_cells: List[PockelsCell] (default=, default=[], title='Pockels cells')
+  - additional_devices: List[Device] (default=, default=[], title='Additional devices')
+  - daqs: List[RIG_DAQ_DEVICES] (default=, default=[], title='Data acquisition devices')
+  - calibrations: List[Calibration] (default=..., title='Full calibration of devices')
+  - ccf_coordinate_transform: Optional[str] (default=, default=None, title='CCF coordinate transform', description='Path to file that details the CCF-to-lab coordinate transform')
+  - origin: Optional[Origin] (default=, default=None, title='Origin point for rig position transforms')
+  - rig_axes: Optional[List[Axis]] (default=, default=None, title='Rig axes', min_length=3, max_length=3)
+  - modalities: Set[Modality.ONE_OF] (default=..., title='Modalities')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: ModelArchitecture
+  - backbone: ModelBackbone (default=..., title='Backbone', description='Core network architecture')
+  - software: List[Software] (default=, default=[], title='Software frameworks')
+  - layers: Optional[int] (default=, default=None, title='Layers')
+  - parameters: AindGenericType (default=, default=AindGeneric(), title='Parameters')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: PerformanceMetric
+  - name: str (default=..., title='Metric name')
+  - value: Any (default=..., title='Metric value')
+
+Model: ModelEvaluation
+  - name: ProcessName (default=ProcessName.MODEL_EVALUATION, title='Process name')
+  - performance: List[PerformanceMetric] (default=..., title='Evaluation performance')
+
+Model: ModelTraining
+  - name: ProcessName (default=ProcessName.MODEL_TRAINING, title='Process name')
+  - train_performance: List[PerformanceMetric] (default=..., title='Training performance', description='Performance on training set')
+  - test_performance: Optional[List[PerformanceMetric]] (default=, default=None, title='Test performance', description='Performance on test data, evaluated during training')
+  - test_data: Optional[str] (default=, default=None, title='Test data', description='Path or cross-validation/split approach')
+
+Model: Model
+  - describedBy: str (default=_DESCRIBED_BY_URL, json_schema_extra={'const': _DESCRIBED_BY_URL})
+  - schema_version: Literal['0.0.1'] (default='0.0.1', )
+  - name: str (default=..., title='Name')
+  - license: str (default=..., title='License')
+  - developer_full_name: Optional[List[str]] (default=, default=None, title='Name of developer')
+  - developer_institution: Optional[Organization.ONE_OF] (default=, default=None, title='Institute where developed')
+  - modality: List[Modality.ONE_OF] (default=..., title='Modality')
+  - architecture: ModelArchitecture (default=..., title='Model architecture')
+  - intended_use: str (default=..., title='Intended model use', description='Semantic description of intended use')
+  - limitations: Optional[str] (default=, default=None, title='Model limitations')
+  - pretrained_source_url: Optional[str] (default=, default=None, title='Pretrained source URL')
+  - training: Optional[List[ModelTraining]] (default=, default=[], title='Training')
+  - evaluations: Optional[List[ModelEvaluation]] (default=, default=[], title='Evaluations')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: Immersion
+  - medium: ImmersionMedium (default=..., title='Immersion medium')
+  - refractive_index: Decimal (default=..., title='Index of refraction')
+
+Model: ProcessingSteps
+  - channel_name: str (default=..., title='Channel name')
+  - process_name: List[Literal[ProcessName.IMAGE_ATLAS_ALIGNMENT, ProcessName.IMAGE_BACKGROUND_SUBTRACTION, ProcessName.IMAGE_CELL_SEGMENTATION, ProcessName.IMAGE_DESTRIPING, ProcessName.IMAGE_FLAT_FIELD_CORRECTION, ProcessName.IMAGE_IMPORTING, ProcessName.IMAGE_THRESHOLDING, ProcessName.IMAGE_TILE_ALIGNMENT, ProcessName.IMAGE_TILE_FUSING, ProcessName.IMAGE_TILE_PROJECTION, ProcessName.FILE_FORMAT_CONVERSION]] (default=..., )
+
+Model: Acquisition
+  - describedBy: str (default=, default=_DESCRIBED_BY_URL, json_schema_extra={'const': _DESCRIBED_BY_URL})
+  - schema_version: SkipValidation[Literal['1.0.4']] (default=, default='1.0.4')
+  - protocol_id: List[str] (default=, default=[], title='Protocol ID', description='DOI for protocols.io')
+  - experimenter_full_name: List[str] (default=..., description='First and last name of the experimenter(s).', title='Experimenter(s) full name')
+  - specimen_id: str (default=..., title='Specimen ID')
+  - subject_id: Optional[str] (default=, default=None, title='Subject ID')
+  - instrument_id: str (default=..., title='Instrument ID')
+  - calibrations: List[Calibration] (default=, default=[], title='Calibrations', description='List of calibration measurements taken prior to acquisition.')
+  - maintenance: List[Maintenance] (default=, default=[], title='Maintenance', description='List of maintenance on rig prior to acquisition.')
+  - session_start_time: AwareDatetimeWithDefault (default=..., title='Session start time')
+  - session_end_time: AwareDatetimeWithDefault (default=..., title='Session end time')
+  - session_type: Optional[str] (default=, default=None, title='Session type')
+  - tiles: List[AcquisitionTile] (default=..., title='Acquisition tiles')
+  - axes: List[ImageAxis] (default=..., title='Acquisition axes')
+  - chamber_immersion: Immersion (default=..., title='Acquisition chamber immersion data')
+  - sample_immersion: Optional[Immersion] (default=, default=None, title='Acquisition sample immersion data')
+  - active_objectives: Optional[List[str]] (default=, default=None, title='List of objectives used in this acquisition.')
+  - local_storage_directory: Optional[str] (default=, default=None, title='Local storage directory')
+  - external_storage_directory: Optional[str] (default=, default=None, title='External storage directory')
+  - processing_steps: List[ProcessingSteps] (default=, default=[], title='Processing steps', description='List of downstream processing steps planned for each channel')
+  - software: Optional[List[Software]] (default=, default=[], title='Acquisition software version data')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: Readout
+  - fluorophore: Fluorophore (default=..., title='Fluorophore')
+  - excitation_wavelength: int (default=..., title='Excitation wavelength (nm)')
+  - excitation_wavelength_unit: SizeUnit (default=, default=SizeUnit.NM, title='Excitation wavelength unit')
+  - stain_type: StainType (default=..., title='Stain type')
+
+Model: HCRReadout
+  - initiator_name: str (default=..., title='Initiator name')
+
+Model: OligoProbe
+  - species: Species.ONE_OF (default=..., title='Species')
+  - gene: PIDName (default=..., title='Gene name, accession number, and registry')
+  - probe_sequences: List[str] (default=..., title='Probe sequences')
+  - readout: Readout (default=..., title='Readout')
+
+Model: HCRProbe
+  - initiator_name: str (default=..., title='Initiator name')
+  - readout: HCRReadout (default=..., title='Readout')
+
+Model: Stain
+  - stain_type: StainType (default=..., title='Stain type')
+  - concentration: create_unit_with_value('concentration', Decimal, ConcentrationUnit, ConcentrationUnit.UM) (default=..., title='Concentration (uM)')
+
+Model: HybridizationChainReaction
+  - round_index: int (default=..., title='Round index')
+  - start_time: AwareDatetimeWithDefault (default=..., title='Round start time')
+  - end_time: AwareDatetimeWithDefault (default=..., title='Round end time')
+  - HCR_probes: List[HCRProbe] (default=..., title='HCR probes')
+  - other_probes: List[OligoProbe] (default=, default=[], title='Other probes')
+  - probe_concentration: Decimal (default=..., title='Probe concentration (M)')
+  - probe_concentration_unit: str (default=, default='M', title='Probe concentration unit')
+  - other_stains: List[Stain] (default=, default=[], title='Other stains')
+  - instrument_id: str (default=..., title='Instrument ID')
+
+Model: HCRSeries
+  - codebook_name: str (default=..., title='Codebook name')
+  - number_of_rounds: int (default=..., title='Number of round')
+  - hcr_rounds: List[HybridizationChainReaction] (default=..., title='Hybridization Chain Reaction rounds')
+  - strip_qc_compatible: bool (default=..., title='Strip QC compatible')
+
+Model: Antibody
+  - immunolabel_class: ImmunolabelClass (default=..., title='Immunolabel class')
+  - fluorophore: Optional[Fluorophore] (default=, default=None, title='Fluorophore')
+  - mass: Decimal (default=..., title='Mass of antibody')
+  - mass_unit: MassUnit (default=, default=MassUnit.UG, title='Mass unit')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: Sectioning
+  - procedure_type: Literal['Sectioning']
+  - number_of_slices: int (default=..., title='Number of slices')
+  - output_specimen_ids: List[str] (default=..., title='Output specimen ids', min_length=1)
+  - section_orientation: SectionOrientation (default=..., title='Sectioning orientation')
+  - section_thickness: Decimal (default=..., title='Section thickness')
+  - section_thickness_unit: SizeUnit (default=, default=SizeUnit.MM, title='Section thickness unit')
+  - section_distance_from_reference: Decimal (default=..., title='Section distance from reference')
+  - section_distance_unit: SizeUnit (default=, default=SizeUnit.MM, title='Distance unit')
+  - reference_location: CoordinateReferenceLocation (default=..., title='Reference location for distance measurement')
+  - section_strategy: SectionStrategy (default=..., title='Slice strategy')
+  - targeted_structure: CCFStructure.ONE_OF (default=..., title='Targeted structure')
+
+Model: SpecimenProcedure
+  - procedure_type: SpecimenProcedureType (default=..., title='Procedure type')
+  - procedure_name: Optional[str] (default=, default=None, title='Procedure name', description='Name to clarify specific procedure used as needed')
+  - specimen_id: str (default=..., title='Specimen ID')
+  - start_date: date (default=..., title='Start date')
+  - end_date: date (default=..., title='End date')
+  - experimenter_full_name: str (default=..., description='First and last name of the experimenter.', title='Experimenter full name')
+  - protocol_id: List[str] (default=..., title='Protocol ID', description='DOI for protocols.io')
+  - reagents: List[Reagent] (default=, default=[], title='Reagents')
+  - hcr_series: Optional[HCRSeries] (default=, default=None, title='HCR Series')
+  - antibodies: Optional[List[Antibody]] (default=, default=None, title='Immunolabeling')
+  - sectioning: Optional[Sectioning] (default=, default=None, title='Sectioning')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: Anaesthetic
+  - type: str (default=..., title='Type')
+  - duration: Decimal (default=..., title='Duration')
+  - duration_unit: TimeUnit (default=, default=TimeUnit.M, title='Duration unit')
+  - level: Optional[Decimal] (default=, default=None, title='Level (percent)', ge=1, le=5)
+
+Model: OtherSubjectProcedure
+  - procedure_type: Literal['Other Subject Procedure']
+  - protocol_id: Optional[str] (default=, default=None, title='Protocol ID', description='DOI for protocols.io')
+  - description: str (default=..., title='Description')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: CatheterImplant
+  - procedure_type: Literal['Catheter Implant']
+  - where_performed: Organization.CATHETER_IMPLANT_INSTITUTIONS (default=..., title='Where performed')
+  - catheter_material: CatheterMaterial (default=..., title='Catheter material')
+  - catheter_design: CatheterDesign (default=..., title='Catheter design')
+  - catheter_port: CatheterPort (default=..., title='Catheter port')
+  - targeted_structure: MouseAnatomicalStructure.BLOOD_VESSELS (default=..., title='Targeted blood vessel')
+
+Model: Craniotomy
+  - procedure_type: Literal['Craniotomy']
+  - protocol_id: str (default=..., title='Protocol ID', description='DOI for protocols.io')
+  - craniotomy_type: CraniotomyType (default=..., title='Craniotomy type')
+  - craniotomy_hemisphere: Optional[Side] (default=, default=None, title='Craniotomy hemisphere')
+  - bregma_to_lambda_distance: Optional[Decimal] (default=, default=None, title='Bregma to lambda (mm)', description='Distance between bregman and lambda')
+  - bregma_to_lambda_unit: SizeUnit (default=, default=SizeUnit.MM, title='Bregma to lambda unit')
+  - implant_part_number: Optional[str] (default=, default=None, title='Implant part number')
+  - dura_removed: Optional[bool] (default=, default=None, title='Dura removed')
+  - protective_material: Optional[ProtectiveMaterial] (default=, default=None, title='Protective material')
+  - recovery_time: Optional[Decimal] (default=, default=None, title='Recovery time')
+  - recovery_time_unit: TimeUnit (default=, default=TimeUnit.M, title='Recovery time unit')
+
+Model: Headframe
+  - procedure_type: Literal['Headframe']
+  - protocol_id: str (default=..., title='Protocol ID', description='DOI for protocols.io')
+  - headframe_type: str (default=..., title='Headframe type')
+  - headframe_part_number: str (default=..., title='Headframe part number')
+  - headframe_material: Optional[HeadframeMaterial] (default=, default=None, title='Headframe material')
+  - well_part_number: Optional[str] (default=, default=None, title='Well part number')
+  - well_type: Optional[str] (default=, default=None, title='Well type')
+
+Model: ProtectiveMaterialReplacement
+  - procedure_type: Literal['Ground wire']
+  - protocol_id: str (default=..., title='Protocol ID', description='DOI for protocols.io')
+  - protective_material: ProtectiveMaterial (default=..., title='Protective material', description='New material being applied')
+  - ground_wire_hole: Optional[int] (default=, default=None, title='Ground wire hole')
+  - ground_wire_material: Optional[GroundWireMaterial] (default=, default=None, title='Ground wire material')
+  - ground_wire_diameter: Optional[Decimal] (default=, default=None, title='Ground wire diameter')
+  - ground_wire_diameter_unit: SizeUnit (default=, default=SizeUnit.IN, title='Ground wire diameter unit')
+  - well_part_number: Optional[str] (default=, default=None, title='Well part number')
+  - well_type: Optional[str] (default=, default=None, title='Well type')
+
+Model: TarsVirusIdentifiers
+  - virus_tars_id: Optional[str] (default=, default=None, title="Virus ID, usually begins 'AiV'")
+  - plasmid_tars_alias: Optional[str] (default=, default=None, title='Plasmid alias', description="Alias used to reference the plasmid, usually begins 'AiP'")
+  - prep_lot_number: str (default=..., title='Preparation lot number')
+  - prep_date: Optional[date] (default=, default=None, title='Preparation lot date', description='Date this prep lot was titered')
+  - prep_type: Optional[VirusPrepType] (default=, default=None, title='Viral prep type')
+  - prep_protocol: Optional[str] (default=, default=None, title='Prep protocol')
+
+Model: ViralMaterial
+  - material_type: Literal['Virus'] (default=, default='Virus', title='Injection material type')
+  - name: str (default=..., title='Full genome name', description='Full genome for virus construct')
+  - tars_identifiers: Optional[TarsVirusIdentifiers] (default=, default=None, title='TARS IDs', description='TARS database identifiers')
+  - addgene_id: Optional[PIDName] (default=, default=None, title='Addgene id', description='Registry must be Addgene')
+  - titer: Optional[int] (default=, default=None, title='Effective titer (gc/mL)', description='Final titer of viral material, accounting for mixture/diliution')
+  - titer_unit: str (default=, default='gc/mL', title='Titer unit')
+
+Model: NonViralMaterial
+  - material_type: Literal['Reagent'] (default=, default='Reagent', title='Injection material type')
+  - concentration: Optional[Decimal] (default=, default=None, title='Concentration', description='Must provide concentration unit')
+  - concentration_unit: str (default=, default='mg/mL', title='Concentration unit')
+
+Model: Injection
+  - injection_materials: List[Annotated[Union[ViralMaterial, NonViralMaterial], Field(..., discriminator='material_type')]] (default=..., title='Injection material', min_length=1)
+  - recovery_time: Optional[Decimal] (default=, default=None, title='Recovery time')
+  - recovery_time_unit: TimeUnit (default=, default=TimeUnit.M, title='Recovery time unit')
+  - injection_duration: Optional[Decimal] (default=, default=None, title='Injection duration')
+  - injection_duration_unit: TimeUnit (default=, default=TimeUnit.M, title='Injection duration unit')
+  - instrument_id: Optional[str] (default=, default=None, title='Instrument ID')
+  - protocol_id: str (default=..., title='Protocol ID', description='DOI for protocols.io')
+
+Model: RetroOrbitalInjection
+  - procedure_type: Literal['Retro-orbital injection']
+  - injection_volume: Decimal (default=..., title='Injection volume (uL)')
+  - injection_volume_unit: VolumeUnit (default=, default=VolumeUnit.UL, title='Injection volume unit')
+  - injection_eye: Side (default=..., title='Injection eye')
+
+Model: IntraperitonealInjection
+  - procedure_type: Literal['Intraperitoneal injection']
+  - time: Optional[AwareDatetimeWithDefault] (default=, default=None, title='Injection time')
+  - injection_volume: Decimal (default=..., title='Injection volume (uL)')
+  - injection_volume_unit: VolumeUnit (default=, default=VolumeUnit.UL, title='Injection volume unit')
+
+Model: BrainInjection
+  - injection_coordinate_ml: Decimal (default=..., title='Injection coordinate ML (mm)')
+  - injection_coordinate_ap: Decimal (default=..., title='Injection coordinate AP (mm)')
+  - injection_coordinate_depth: List[Decimal] (default=..., title='Injection coordinate depth (mm)')
+  - injection_coordinate_unit: SizeUnit (default=, default=SizeUnit.MM, title='Injection coordinate unit')
+  - injection_coordinate_reference: Optional[CoordinateReferenceLocation] (default=, default=None, title='Injection coordinate reference')
+  - bregma_to_lambda_distance: Optional[Decimal] (default=, default=None, title='Bregma to lambda (mm)', description='Distance between bregman and lambda')
+  - bregma_to_lambda_unit: SizeUnit (default=, default=SizeUnit.MM, title='Bregma to lambda unit')
+  - injection_angle: Decimal (default=..., title='Injection angle (deg)')
+  - injection_angle_unit: AngleUnit (default=, default=AngleUnit.DEG, title='Injection angle unit')
+  - targeted_structure: Optional[CCFStructure.ONE_OF] (default=, default=None, title='Injection targeted brain structure')
+  - injection_hemisphere: Optional[Side] (default=, default=None, title='Injection hemisphere')
+
+Model: NanojectInjection
+  - procedure_type: Literal['Nanoject injection']
+  - injection_volume: List[Decimal] (default=..., title='Injection volume (nL)', description='Injection volume, one value per location')
+  - injection_volume_unit: VolumeUnit (default=VolumeUnit.NL, title='Injection volume unit')
+
+Model: IontophoresisInjection
+  - procedure_type: Literal['Iontophoresis injection']
+  - injection_current: Decimal (default=..., title='Injection current (uA)')
+  - injection_current_unit: CurrentUnit (default=, default=CurrentUnit.UA, title='Injection current unit')
+  - alternating_current: str (default=..., title='Alternating current')
+
+Model: IntraCerebellarVentricleInjection
+  - procedure_type: Literal['ICV injection']
+  - injection_volume: List[Decimal] (default=..., title='Injection volume (nL)', description='Injection volume, one value per location')
+  - injection_volume_unit: VolumeUnit (default=VolumeUnit.NL, title='Injection volume unit')
+
+Model: IntraCisternalMagnaInjection
+  - procedure_type: Literal['ICM injection']
+  - injection_volume: List[Decimal] (default=..., title='Injection volume (nL)', description='Injection volume, one value per location')
+  - injection_volume_unit: VolumeUnit (default=VolumeUnit.NL, title='Injection volume unit')
+
+Model: SampleCollection
+  - procedure_type: Literal['Sample collection']
+  - sample_type: SampleType (default=..., title='Sample type')
+  - time: AwareDatetimeWithDefault (default=..., title='Collection time')
+  - collection_volume: Decimal (default=..., title='Collection volume')
+  - collection_volume_unit: VolumeUnit (default=..., title='Collection volume unit')
+  - collection_method: Optional[str] (default=, default=None, title='Collection method for terminal collection')
+
+Model: TrainingProtocol
+  - procedure_type: Literal['Training']
+  - training_name: str (default=..., title='Training protocol name')
+  - protocol_id: str (default=..., title='Training protocol ID')
+  - start_date: date (default=..., title='Training protocol start date')
+  - end_date: Optional[date] (default=, default=None, title='Training protocol end date')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: OphysProbe
+  - ophys_probe: FiberProbe (default=..., title='Fiber probe')
+  - targeted_structure: CCFStructure.ONE_OF (default=..., title='Targeted structure')
+  - stereotactic_coordinate_ap: Decimal (default=..., title='Stereotactic coordinate A/P (mm)')
+  - stereotactic_coordinate_ml: Decimal (default=..., title='Stereotactic coordinate M/L (mm)')
+  - stereotactic_coordinate_dv: Decimal (default=..., title='Stereotactic coordinate D/V (mm)')
+  - stereotactic_coordinate_unit: SizeUnit (default=, default=SizeUnit.MM, title='Sterotactic coordinate unit')
+  - stereotactic_coordinate_reference: Optional[CoordinateReferenceLocation] (default=, default=None, title='Stereotactic coordinate reference')
+  - bregma_to_lambda_distance: Optional[Decimal] (default=, default=None, title='Bregma to lambda (mm)', description='Distance between bregman and lambda')
+  - bregma_to_lambda_unit: SizeUnit (default=, default=SizeUnit.MM, title='Bregma to lambda unit')
+  - angle: Decimal (default=..., title='Angle (deg)')
+  - angle_unit: AngleUnit (default=, default=AngleUnit.DEG, title='Angle unit')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: FiberImplant
+  - procedure_type: Literal['Fiber implant']
+  - protocol_id: str (default=..., title='Protocol ID', description='DOI for protocols.io')
+  - probes: List[OphysProbe] (default=..., title='Ophys Probes')
+
+Model: WaterRestriction
+  - procedure_type: Literal['Water restriction']
+  - iacuc_protocol: str (default=..., title='IACUC protocol')
+  - target_fraction_weight: int (default=..., title='Target fraction weight (%)')
+  - target_fraction_weight_unit: UnitlessUnit (default=, default=UnitlessUnit.PERCENT, title='Target fraction weight unit')
+  - minimum_water_per_day: Decimal (default=..., title='Minimum water per day (mL)')
+  - minimum_water_per_day_unit: VolumeUnit (default=, default=VolumeUnit.ML, title='Minimum water per day unit')
+  - baseline_weight: Decimal (default=..., title='Baseline weight (g)', description='Weight at start of water restriction')
+  - weight_unit: MassUnit (default=, default=MassUnit.G, title='Weight unit')
+  - start_date: date (default=..., title='Water restriction start date')
+  - end_date: Optional[date] (default=, default=None, title='Water restriction end date')
+
+Model: MyomatrixContact
+  - body_part: MouseAnatomicalStructure.BODY_PARTS (default=..., title='Body part of contact insertion')
+  - side: Side (default=..., title='Body side')
+  - muscle: MouseAnatomicalStructure.EMG_MUSCLES (default=..., title='Muscle of contact insertion')
+  - in_muscle: bool (default=..., title='In muscle')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: MyomatrixThread
+  - ground_electrode_location: MouseAnatomicalStructure.BODY_PARTS (default=..., title='Location of ground electrode')
+  - contacts: List[MyomatrixContact] (default=..., title='Contacts')
+
+Model: MyomatrixInsertion
+  - procedure_type: Literal['Myomatrix_Insertion']
+  - protocol_id: str (default=..., title='Protocol ID', description='DOI for protocols.io')
+  - myomatrix_array: MyomatrixArray (default=..., title='Myomatrix array')
+  - threads: List[MyomatrixThread] (default=..., title='Array threads')
+
+Model: Perfusion
+  - procedure_type: Literal['Perfusion']
+  - protocol_id: str (default=..., title='Protocol ID', description='DOI for protocols.io')
+  - output_specimen_ids: Set[str] (default=..., title='Specimen ID', description='IDs of specimens resulting from this procedure.')
+
+Model: Surgery
+  - procedure_type: Literal['Surgery']
+  - protocol_id: str (default=..., title='Protocol ID', description='DOI for protocols.io')
+  - start_date: date (default=..., title='Start date')
+  - experimenter_full_name: str (default=..., description='First and last name of the experimenter.', title='Experimenter full name')
+  - iacuc_protocol: Optional[str] (default=, default=None, title='IACUC protocol')
+  - animal_weight_prior: Optional[Decimal] (default=, default=None, title='Animal weight (g)', description='Animal weight before procedure')
+  - animal_weight_post: Optional[Decimal] (default=, default=None, title='Animal weight (g)', description='Animal weight after procedure')
+  - weight_unit: MassUnit (default=, default=MassUnit.G, title='Weight unit')
+  - anaesthesia: Optional[Anaesthetic] (default=, default=None, title='Anaesthesia')
+  - workstation_id: Optional[str] (default=, default=None, title='Workstation ID')
+  - procedures: List[Annotated[Union[CatheterImplant, Craniotomy, FiberImplant, Headframe, IntraCerebellarVentricleInjection, IntraCisternalMagnaInjection, IntraperitonealInjection, IontophoresisInjection, MyomatrixInsertion, NanojectInjection, OtherSubjectProcedure, Perfusion, ProtectiveMaterialReplacement, RetroOrbitalInjection, SampleCollection], Field(discriminator='procedure_type')]] (default=, title='Procedures', min_length=1)
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: Procedures
+  - describedBy: str (default=, default=_DESCRIBED_BY_URL, json_schema_extra={'const': _DESCRIBED_BY_URL})
+  - schema_version: SkipValidation[Literal['1.2.1']] (default=, default='1.2.1')
+  - subject_id: str (default=..., description='Unique identifier for the subject. If this is not a Allen LAS ID, indicate this in the Notes.', title='Subject ID')
+  - subject_procedures: List[Annotated[Union[Surgery, TrainingProtocol, WaterRestriction, OtherSubjectProcedure], Field(discriminator='procedure_type')]] (default=, default=[], title='Subject Procedures')
+  - specimen_procedures: List[SpecimenProcedure] (default=, default=[], title='Specimen Procedures')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: ResourceTimestamped
+  - timestamp: AwareDatetimeWithDefault (default=..., title='Timestamp')
+  - usage: float (default=..., title='Usage')
+
+Model: ResourceUsage
+  - os: str (default=..., title='Operating system')
+  - architecture: str (default=..., title='Architecture')
+  - cpu: Optional[str] (default=, default=None, title='CPU name')
+  - cpu_cores: Optional[int] (default=, default=None, title='CPU cores')
+  - gpu: Optional[str] (default=, default=None, title='GPU name')
+  - system_memory: Optional[float] (default=, default=None, title='System memory')
+  - system_memory_unit: Optional[MemoryUnit] (default=, default=None, title='System memory unit')
+  - ram: Optional[float] (default=, default=None, title='System RAM')
+  - ram_unit: Optional[MemoryUnit] (default=, default=None, title='Ram unit')
+  - cpu_usage: Optional[List[ResourceTimestamped]] (default=, default=None, title='CPU usage')
+  - gpu_usage: Optional[List[ResourceTimestamped]] (default=, default=None, title='GPU usage')
+  - ram_usage: Optional[List[ResourceTimestamped]] (default=, default=None, title='RAM usage')
+  - usage_unit: str (default=, default=UnitlessUnit.PERCENT, title='Usage unit')
+
+Model: DataProcess
+  - name: ProcessName (default=..., title='Name')
+  - software_version: Optional[str] (default=, default=None, description='Version of the software used', title='Version')
+  - start_date_time: AwareDatetimeWithDefault (default=..., title='Start date time')
+  - end_date_time: AwareDatetimeWithDefault (default=..., title='End date time')
+  - input_location: Union[str, List[str]] (default=..., description='Path(s) to data inputs', title='Input location')
+  - output_location: str (default=..., description='Path to data outputs', title='Output location')
+  - code_url: str (default=..., description='Path to code repository', title='Code URL')
+  - code_version: Optional[str] (default=, default=None, description='Version of the code', title='Code version')
+  - parameters: AindGenericType (default=, default=AindGeneric(), title='Parameters')
+  - outputs: AindGenericType (default=, default=AindGeneric(), description='Output parameters', title='Outputs')
+  - notes: Optional[str] (default=, default=None, title='Notes', validate_default=True)
+  - resources: Optional[ResourceUsage] (default=, default=None, title='Process resource usage')
+
+Model: PipelineProcess
+  - data_processes: List[DataProcess] (default=..., title='Data processing')
+  - processor_full_name: str (default=..., title='Processor Full Name', description='Name of person responsible for processing pipeline')
+  - pipeline_version: Optional[str] (default=, default=None, description='Version of the pipeline', title='Pipeline version')
+  - pipeline_url: Optional[str] (default=, default=None, description='URL to the pipeline code', title='Pipeline URL')
+  - note: Optional[str] (default=, default=None, title='Notes')
+
+Model: AnalysisProcess
+  - name: ProcessName (default=ProcessName.ANALYSIS, title='Process name')
+  - analyst_full_name: str (default=..., title='Analyst Full Name', description='Name of person responsible for running analysis')
+  - description: str (default=..., title='Analysis Description')
+
+Model: Registration
+  - registration_type: RegistrationType (default=..., title='Registration type', description='Either inter channel across different channels or intra channel')
+  - registration_channel: Optional[int] (default=, default=None, title='Registration channel', description='Channel registered to when inter channel')
+  - tiles: List[Tile] (default=..., title='Data tiles')
+
+Model: Processing
+  - _DESCRIBED_BY_URL: str
+  - describedBy: str (default=, default=_DESCRIBED_BY_URL, json_schema_extra={'const': _DESCRIBED_BY_URL})
+  - schema_version: SkipValidation[Literal['1.1.4']] (default=, default='1.1.4')
+  - processing_pipeline: PipelineProcess (default=..., description='Pipeline used to process data', title='Processing Pipeline')
+  - analyses: List[AnalysisProcess] (default=, default=[], description='Analysis steps taken after processing', title='Analysis Steps')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: Com
+  - hardware_name: str (default=..., title='Controlled hardware device')
+  - com_port: str (default=..., title='COM port')
+
+Model: Instrument
+  - describedBy: str (default=, default=_DESCRIBED_BY_URL, json_schema_extra={'const': _DESCRIBED_BY_URL})
+  - schema_version: SkipValidation[Literal['1.0.4']] (default=, default='1.0.4')
+  - instrument_id: Optional[str] (default=, default=None, description='Unique instrument identifier, name convention: <room>-<apparatus name>-<date modified YYYYMMDD>', title='Instrument ID')
+  - modification_date: date (default=..., title='Date of modification')
+  - instrument_type: ImagingInstrumentType (default=..., title='Instrument type')
+  - manufacturer: Organization.ONE_OF (default=..., title='Instrument manufacturer')
+  - temperature_control: Optional[bool] (default=, default=None, title='Temperature control')
+  - humidity_control: Optional[bool] (default=, default=None, title='Humidity control')
+  - optical_tables: List[OpticalTable] (default=, default=[], title='Optical table')
+  - enclosure: Optional[Enclosure] (default=, default=None, title='Enclosure')
+  - objectives: List[Objective] (default=..., title='Objectives')
+  - detectors: List[Detector] (default=, default=[], title='Detectors')
+  - light_sources: List[LIGHT_SOURCES] (default=, default=[], title='Light sources')
+  - lenses: List[Lens] (default=, default=[], title='Lenses')
+  - fluorescence_filters: List[Filter] (default=, default=[], title='Fluorescence filters')
+  - motorized_stages: List[MotorizedStage] (default=, default=[], title='Motorized stages')
+  - scanning_stages: List[ScanningStage] (default=, default=[], title='Scanning motorized stages')
+  - additional_devices: List[AdditionalImagingDevice] (default=, default=[], title='Additional devices')
+  - calibration_date: Optional[date] (default=, default=None, description='Date of most recent calibration', title='Calibration date')
+  - calibration_data: Optional[str] (default=, default=None, description='Path to calibration data from most recent calibration', title='Calibration data')
+  - com_ports: List[Com] (default=, default=[], title='COM ports')
+  - daqs: List[DAQDevice] (default=, default=[], title='DAQ')
+  - notes: Optional[str] (default=, default=None, validate_default=True)
+
+Model: Channel
+  - channel_name: str (default=..., title='Channel')
+  - intended_measurement: Optional[str] (default=, default=None, title='Intended measurement', description='What signal is this channel measuring')
+  - light_source_name: str (default=..., title='Light source name', description='Must match device name')
+  - filter_names: List[str] (default=..., title='Filter names', description='Must match device names')
+  - detector_name: str (default=..., title='Detector name', description='Must match device name')
+  - additional_device_names: List[str] (default=, default=[], title='Additional device names')
+  - excitation_wavelength: int (default=..., title='Wavelength', ge=300, le=1000)
+  - excitation_wavelength_unit: SizeUnit (default=, default=SizeUnit.NM, title='Wavelength unit')
+  - excitation_power: float (default=..., title='Light source power', le=2000)
+  - excitation_power_unit: PowerUnit (default=, default=PowerUnit.MW, title='Light source power unit')
+  - filter_wheel_index: Optional[int] (default=, default=None, title='Filter wheel index')
+  - emission_wavelength: Optional[int] (default=, default=None, title='Emission wavelength')
+  - emission_wavelength_unit: SizeUnit (default=, default=SizeUnit.NM, title='Wavelength unit')
+  - dilation: Optional[int] (default=, default=None, title='Dilation (pixels)')
+  - dilation_unit: SizeUnit (default=, default=SizeUnit.PX, title='Dilation unit')
+  - description: Optional[str] (default=, default=None, title='Description')
+
+Model: Tile
+  - coordinate_transformations: List[Annotated[Union[Scale3dTransform, Translation3dTransform, Rotation3dTransform, Affine3dTransform], Field(discriminator='type')]] (default=..., title='Tile coordinate transformations')
+  - file_name: Optional[str] (default=, default=None, title='File name')
+
+Model: AcquisitionTile
+  - channel: Channel (default=..., title='Channel')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+  - imaging_angle: int (default=, default=0, title='Imaging angle')
+  - imaging_angle_unit: AngleUnit (default=, default=AngleUnit.DEG, title='Imaging angle unit')
+  - acquisition_start_time: Optional[AwareDatetimeWithDefault] (default=, default=None, title='Acquisition start time')
+  - acquisition_end_time: Optional[AwareDatetimeWithDefault] (default=, default=None, title='Acquisition end time')
+
+Model: Reagent
+  - name: str (default=..., title='Name')
+  - source: Organization.ONE_OF (default=..., title='Source')
+  - rrid: Optional[PIDName] (default=, default=None, title='Research Resource ID')
+  - lot_number: str (default=..., title='Lot number')
+  - expiration_date: Optional[date] (default=, default=None, title='Lot expiration date')
+
+Model: OptoStimulation
+  - stimulus_type: Literal['Opto Stimulation']
+  - stimulus_name: str (default=..., title='Stimulus name')
+  - pulse_shape: PulseShape (default=..., title='Pulse shape')
+  - pulse_frequency: List[Decimal] (default=..., title='Pulse frequency (Hz)')
+  - pulse_frequency_unit: FrequencyUnit (default=, default=FrequencyUnit.HZ, title='Pulse frequency unit')
+  - number_pulse_trains: List[int] (default=..., title='Number of pulse trains')
+  - pulse_width: List[int] (default=..., title='Pulse width (ms)')
+  - pulse_width_unit: TimeUnit (default=, default=TimeUnit.MS, title='Pulse width unit')
+  - pulse_train_duration: List[Decimal] (default=..., title='Pulse train duration (s)')
+  - pulse_train_duration_unit: TimeUnit (default=, default=TimeUnit.S, title='Pulse train duration unit')
+  - fixed_pulse_train_interval: bool (default=..., title='Fixed pulse train interval')
+  - pulse_train_interval: Optional[Decimal] (default=, default=None, title='Pulse train interval (s)', description='Time between pulse trains')
+  - pulse_train_interval_unit: TimeUnit (default=, default=TimeUnit.S, title='Pulse train interval unit')
+  - baseline_duration: Decimal (default=..., title='Baseline duration (s)', description='Duration of baseline recording prior to first pulse train')
+  - baseline_duration_unit: TimeUnit (default=, default=TimeUnit.S, title='Baseline duration unit')
+  - other_parameters: AindGenericType (default=AindGeneric(), title='Other parameters')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: VisualStimulation
+  - stimulus_type: Literal['Visual Stimulation']
+  - stimulus_name: str (default=..., title='Stimulus name')
+  - stimulus_parameters: AindGenericType (default=AindGeneric(), title='Stimulus parameters', description='Define and list the parameter values used (e.g. all TF or orientation values)')
+  - stimulus_template_name: List[str] (default=, default=[], title='Stimulus template name', description='Name of image set or movie displayed')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: PhotoStimulationGroup
+  - group_index: int (default=..., title='Group index')
+  - number_of_neurons: int (default=..., title='Number of neurons')
+  - stimulation_laser_power: Decimal (default=..., title='Stimulation laser power (mW)')
+  - stimulation_laser_power_unit: PowerUnit (default=, default=PowerUnit.MW, title='Stimulation laser power unit')
+  - number_trials: int (default=..., title='Number of trials')
+  - number_spirals: int (default=..., title='Number of spirals')
+  - spiral_duration: Decimal (default=..., title='Spiral duration (s)')
+  - spiral_duration_unit: TimeUnit (default=, default=TimeUnit.S, title='Spiral duration unit')
+  - inter_spiral_interval: Decimal (default=..., title='Inter trial interval (s)')
+  - inter_spiral_interval_unit: TimeUnit (default=, default=TimeUnit.S, title='Inter trial interval unit')
+  - other_parameters: AindGenericType (default=AindGeneric(), title='Other parameters')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: PhotoStimulation
+  - stimulus_type: Literal['Photo Stimulation']
+  - stimulus_name: str (default=..., title='Stimulus name')
+  - number_groups: int (default=..., title='Number of groups')
+  - groups: List[PhotoStimulationGroup] (default=..., title='Groups')
+  - inter_trial_interval: Decimal (default=..., title='Inter trial interval (s)')
+  - inter_trial_interval_unit: TimeUnit (default=, default=TimeUnit.S, title='Inter trial interval unit')
+  - other_parameters: AindGenericType (default=AindGeneric(), title='Other parameters')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: OlfactometerChannelConfig
+  - channel_index: int (default=..., title='Channel index')
+  - odorant: str (default=..., title='Odorant')
+  - odorant_dilution: Decimal (default=..., title='Odorant dilution')
+  - odorant_dilution_unit: ConcentrationUnit (default=, default=ConcentrationUnit.VOLUME_PERCENT, title='Dilution unit')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: OlfactoryStimulation
+  - stimulus_type: Literal['Olfactory Stimulation']
+  - stimulus_name: str (default=..., title='Stimulus name')
+  - channels: List[OlfactometerChannelConfig]
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: AuditoryStimulation
+  - stimulus_type: Literal['Auditory Stimulation']
+  - stimulus_name: str (default=..., title='Stimulus name')
+  - sample_frequency: Decimal (default=..., title='Sample frequency')
+  - amplitude_modulation_frequency: Optional[int] (default=, default=None, title='Amplitude modulation frequency')
+  - frequency_unit: FrequencyUnit (default=, default=FrequencyUnit.HZ, title='Tone frequency unit')
+  - bandpass_low_frequency: Optional[Decimal] (default=, default=None, title='Bandpass low frequency')
+  - bandpass_high_frequency: Optional[Decimal] (default=, default=None, title='Bandpass high frequency')
+  - bandpass_filter_type: Optional[FilterType] (default=, default=None, title='Bandpass filter type')
+  - bandpass_order: Optional[int] (default=, default=None, title='Bandpass order')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: Device
+  - device_type: str (default=..., title='Device type')
+  - name: str (default=..., title='Device name')
+  - serial_number: Optional[str] (default=, default=None, title='Serial number')
+  - manufacturer: Optional[Organization.ONE_OF] (default=, default=None, title='Manufacturer')
+  - model: Optional[str] (default=, default=None, title='Model')
+  - path_to_cad: Optional[str] (default=, default=None, title='Path to CAD diagram', description='For CUSTOM manufactured devices')
+  - port_index: Optional[str] (default=, default=None, title='Port index')
+  - additional_settings: AindGenericType (default=AindGeneric(), title='Additional parameters')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: Software
+  - name: str (default=..., title='Software name')
+  - version: str (default=..., title='Software version')
+  - url: Optional[str] (default=, default=None, title='URL to commit being used')
+  - parameters: AindGenericType (default=AindGeneric(), title='Software parameters')
+
+Model: Calibration
+  - calibration_date: AwareDatetimeWithDefault (default=..., title='Date and time of calibration')
+  - device_name: str (default=..., title='Device name', description='Must match a device name in rig/instrument')
+  - description: str (default=..., title='Description', description='Brief description of what is being calibrated')
+  - input: AindGenericType (default=AindGeneric(), description='Calibration input', title='inputs')
+  - output: AindGenericType (default=AindGeneric(), description='Calibration output', title='outputs')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: Maintenance
+  - maintenance_date: AwareDatetimeWithDefault (default=..., title='Date and time of maintenance')
+  - device_name: str (default=..., title='Device name', description='Must match a device name in rig/instrument')
+  - description: str (default=..., title='Description', description='Description on maintenance procedure')
+  - protocol_id: Optional[str] (default=, default=None, title='Protocol ID')
+  - reagents: List[Reagent] (default=, default=[], title='Reagents')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: Detector
+  - device_type: Literal['Detector']
+  - detector_type: DetectorType (default=..., title='Detector Type')
+  - manufacturer: Organization.DETECTOR_MANUFACTURERS
+  - data_interface: DataInterface (default=..., title='Data interface')
+  - cooling: Cooling (default=, default=Cooling.NONE, title='Cooling')
+  - computer_name: Optional[str] (default=, default=None, title='Name of computer receiving data from this camera')
+  - frame_rate: Optional[Decimal] (default=, default=None, title='Frame rate (Hz)', description='Frame rate being used')
+  - frame_rate_unit: FrequencyUnit (default=, default=FrequencyUnit.HZ, title='Frame rate unit')
+  - immersion: Optional[ImmersionMedium] (default=, default=None, title='Immersion')
+  - chroma: Optional[CameraChroma] (default=, default=None, title='Camera chroma')
+  - sensor_width: Optional[int] (default=, default=None, title='Width of the sensor (pixels)')
+  - sensor_height: Optional[int] (default=, default=None, title='Height of the sensor (pixels)')
+  - size_unit: SizeUnit (default=, default=SizeUnit.PX, title='Size unit')
+  - sensor_format: Optional[str] (default=, default=None, title='Sensor format')
+  - sensor_format_unit: Optional[str] (default=, default=None, title='Sensor format unit')
+  - bit_depth: Optional[int] (default=, default=None, title='Bit depth')
+  - bin_mode: BinMode (default=, default=BinMode.NONE, title='Detector binning mode')
+  - bin_width: Optional[int] (default=, default=None, title='Bin width')
+  - bin_height: Optional[int] (default=, default=None, title='Bin height')
+  - bin_unit: SizeUnit (default=, default=SizeUnit.PX, title='Bin size unit')
+  - gain: Optional[Decimal] (default=, default=None, title='Gain')
+  - crop_offset_x: Optional[int] (default=, default=None, title='Crop offset x')
+  - crop_offset_y: Optional[int] (default=, default=None, title='Crop offset y')
+  - crop_width: Optional[int] (default=, default=None, title='Crop width')
+  - crop_height: Optional[int] (default=, default=None, title='Crop width')
+  - crop_unit: SizeUnit (default=, default=SizeUnit.PX, title='Crop size unit')
+  - recording_software: Optional[Software] (default=, default=None, title='Recording software')
+  - driver: Optional[DeviceDriver] (default=, default=None, title='Driver')
+  - driver_version: Optional[str] (default=, default=None, title='Driver version')
+
+Model: Filter
+  - device_type: Literal['Filter']
+  - filter_type: FilterType (default=..., title='Type of filter')
+  - manufacturer: Organization.FILTER_MANUFACTURERS
+  - diameter: Optional[Decimal] (default=, default=None, title='Diameter (mm)')
+  - width: Optional[Decimal] (default=, default=None, title='Width (mm)')
+  - height: Optional[Decimal] (default=, default=None, title='Height (mm)')
+  - size_unit: SizeUnit (default=, default=SizeUnit.MM, title='Size unit')
+  - thickness: Optional[Decimal] (default=, default=None, title='Thickness (mm)', ge=0)
+  - thickness_unit: SizeUnit (default=, default=SizeUnit.MM, title='Thickness unit')
+  - filter_wheel_index: Optional[int] (default=, default=None, title='Filter wheel index')
+  - cut_off_wavelength: Optional[int] (default=, default=None, title='Cut-off wavelength (nm)')
+  - cut_on_wavelength: Optional[int] (default=, default=None, title='Cut-on wavelength (nm)')
+  - center_wavelength: Optional[int] (default=, default=None, title='Center wavelength (nm)')
+  - wavelength_unit: SizeUnit (default=, default=SizeUnit.NM, title='Wavelength unit')
+  - description: Optional[str] (default=, default=None, title='Description', description='More details about filter properties and where/how it is being used')
+
+Model: Lens
+  - device_type: Literal['Lens']
+  - manufacturer: Organization.LENS_MANUFACTURERS
+  - focal_length: Optional[Decimal] (default=, default=None, title='Focal length of the lens (mm)')
+  - focal_length_unit: SizeUnit (default=, default=SizeUnit.MM, title='Focal length unit')
+  - size: Optional[LensSize] (default=, default=None, title='Size (inches)')
+  - lens_size_unit: SizeUnit (default=, default=SizeUnit.IN, title='Lens size unit')
+  - optimized_wavelength_range: Optional[str] (default=, default=None, title='Optimized wavelength range (nm)')
+  - wavelength_unit: SizeUnit (default=, default=SizeUnit.NM, title='Wavelength unit')
+  - max_aperture: Optional[str] (default=, default=None, title='Max aperture (e.g. f/2)')
+
+Model: MotorizedStage
+  - device_type: Literal['Motorized stage']
+  - travel: Decimal (default=..., title='Travel of device (mm)')
+  - travel_unit: SizeUnit (default=, default=SizeUnit.MM, title='Travel unit')
+  - firmware: Optional[str] (default=, default=None, title='Firmware')
+
+Model: Objective
+  - device_type: Literal['Objective']
+  - numerical_aperture: Decimal (default=..., title='Numerical aperture (in air)')
+  - magnification: Decimal (default=..., title='Magnification')
+  - immersion: ImmersionMedium (default=..., title='Immersion')
+  - objective_type: Optional[ObjectiveType] (default=, default=None, title='Objective type')
+
+Model: CameraAssembly
+  - name: str (default=..., title='Camera assembly name')
+  - camera_target: CameraTarget (default=..., title='Camera target')
+  - camera: Camera (default=..., title='Camera')
+  - lens: Lens (default=..., title='Lens')
+  - filter: Optional[Filter] (default=, default=None, title='Filter')
+  - position: Optional[RelativePosition] (default=, default=None, title='Relative position of this assembly')
+
+Model: DAQChannel
+  - channel_name: str (default=..., title='DAQ channel name')
+  - device_name: str (default=..., title='Name of connected device')
+  - channel_type: DaqChannelType (default=..., title='DAQ channel type')
+  - port: Optional[int] (default=, default=None, title='DAQ port')
+  - channel_index: Optional[int] (default=, default=None, title='DAQ channel index')
+  - sample_rate: Optional[Decimal] (default=, default=None, title='DAQ channel sample rate (Hz)')
+  - sample_rate_unit: FrequencyUnit (default=, default=FrequencyUnit.HZ, title='Sample rate unit')
+  - event_based_sampling: Optional[bool] (default=, default=None, title='Set to true if DAQ channel is sampled at irregular intervals')
+
+Model: DAQDevice
+  - device_type: Literal['DAQ Device']
+  - data_interface: DataInterface (default=..., title='Type of connection to PC')
+  - manufacturer: Organization.DAQ_DEVICE_MANUFACTURERS
+  - computer_name: str (default=..., title='Name of computer controlling this DAQ')
+  - channels: List[DAQChannel] (default=, default=[], title='DAQ channels')
+  - firmware_version: Optional[str] (default=, default=None, title='Firmware version')
+  - hardware_version: Optional[str] (default=, default=None, title='Hardware version')
+
+Model: HarpDevice
+  - device_type: Literal['Harp device']
+  - manufacturer: Organization.DAQ_DEVICE_MANUFACTURERS (default=, default=Organization.OEPS)
+  - harp_device_type: HarpDeviceType.ONE_OF (default=..., title='Type of Harp device')
+  - core_version: Optional[str] (default=, default=None, title='Core version')
+  - tag_version: Optional[str] (default=, default=None, title='Tag version')
+  - data_interface: DataInterface (default=, default=DataInterface.USB, title='Data interface')
+  - is_clock_generator: bool (default=..., title='Is Clock Generator')
+
+Model: Laser
+  - device_type: Literal['Laser']
+  - manufacturer: Organization.LASER_MANUFACTURERS
+  - wavelength: int (default=..., title='Wavelength (nm)')
+  - wavelength_unit: SizeUnit (default=, default=SizeUnit.NM, title='Wavelength unit')
+  - maximum_power: Optional[Decimal] (default=, default=None, title='Maximum power (mW)')
+  - power_unit: PowerUnit (default=, default=PowerUnit.MW, title='Power unit')
+  - coupling: Optional[Coupling] (default=, default=None, title='Coupling')
+  - coupling_efficiency: Optional[Decimal] (default=, default=None, title='Coupling efficiency (percent)', ge=0, le=100)
+  - coupling_efficiency_unit: Literal['percent'] (default=, default='percent', title='Coupling efficiency unit')
+  - item_number: Optional[str] (default=, default=None, title='Item number')
+
+Model: LightEmittingDiode
+  - device_type: Literal['Light emitting diode']
+  - manufacturer: Organization.LED_MANUFACTURERS
+  - wavelength: int (default=..., title='Wavelength (nm)')
+  - wavelength_unit: SizeUnit (default=, default=SizeUnit.NM, title='Wavelength unit')
+  - bandwidth: Optional[int] (default=, default=None, title='Bandwidth (FWHM)')
+  - bandwidth_unit: SizeUnit (default=, default=SizeUnit.NM, title='Bandwidth unit')
+
+Model: Lamp
+  - device_type: Literal['Lamp']
+  - wavelength_min: Optional[int] (default=, default=None, title='Wavelength minimum (nm)')
+  - wavelength_max: Optional[int] (default=, default=None, title='Wavelength maximum (nm)')
+  - wavelength_unit: SizeUnit (default=, default=SizeUnit.NM, title='Wavelength unit')
+  - temperature: Optional[int] (default=, default=None, title='Temperature (K)')
+  - temperature_unit: TemperatureUnit (default=, default=TemperatureUnit.K, title='Temperature unit')
+
+Model: ProbePort
+  - index: int (default=..., title='One-based port index')
+  - probes: List[str] (default=..., title='Names of probes connected to this port')
+
+Model: NeuropixelsBasestation
+  - device_type: Literal['Neuropixels basestation']
+  - basestation_firmware_version: str (default=..., title='Basestation firmware version')
+  - bsc_firmware_version: str (default=..., title='Basestation connect board firmware')
+  - slot: int (default=..., title='Slot number for this basestation')
+  - ports: List[ProbePort] (default=..., title='Basestation ports')
+  - data_interface: Literal[DataInterface.PXI]
+  - manufacturer: Annotated[Union[type(Organization.IMEC)], Field(default=Organization.IMEC, discriminator='name')]
+
+Model: OpenEphysAcquisitionBoard
+  - device_type: Literal['Open Ephys acquisition board']
+  - ports: List[ProbePort] (default=..., title='Acquisition board ports')
+  - data_interface: Literal[DataInterface.USB]
+  - manufacturer: Organization.DAQ_DEVICE_MANUFACTURERS (default=, default=Organization.OEPS)
+
+Model: Manipulator
+  - device_type: Literal['Manipulator']
+  - manufacturer: Organization.MANIPULATOR_MANUFACTURERS
+
+Model: Patch
+  - device_type: Literal['Patch']
+  - core_diameter: Decimal (default=..., title='Core diameter (um)')
+  - numerical_aperture: Decimal (default=..., title='Numerical aperture')
+  - photobleaching_date: Optional[date] (default=, default=None, title='Photobleaching date')
+
+Model: LaserAssembly
+  - name: str (default=..., title='Laser assembly name')
+  - manipulator: Manipulator (default=..., title='Manipulator')
+  - lasers: List[Laser] (default=..., title='Lasers connected to this module')
+  - collimator: Device (default=..., title='Collimator')
+  - fiber: Patch (default=..., title='Fiber patch')
+
+Model: Headstage
+  - device_type: Literal['Headstage']
+
+Model: EphysProbe
+  - device_type: Literal['Ephys probe']
+  - probe_model: ProbeModel (default=..., title='Probe model')
+  - lasers: List[Laser] (default=, default=[], title='Lasers connected to this probe')
+  - headstage: Optional[Headstage] (default=, default=None, title='Headstage for this probe')
+
+Model: EphysAssembly
+  - name: str (default=..., title='Ephys assembly name')
+  - manipulator: Manipulator (default=..., title='Manipulator')
+  - probes: List[EphysProbe] (default=..., title='Probes that are held by this module')
+
+Model: FiberProbe
+  - device_type: Literal['Fiber optic probe']
+  - core_diameter: Decimal (default=..., title='Core diameter (um)')
+  - core_diameter_unit: SizeUnit (default=, default=SizeUnit.UM, title='Core diameter unit')
+  - numerical_aperture: Decimal (default=..., title='Numerical aperture')
+  - ferrule_material: Optional[FerruleMaterial] (default=, default=None, title='Ferrule material')
+  - active_length: Optional[Decimal] (default=, default=None, title='Active length (mm)', description='Length of taper')
+  - total_length: Decimal (default=..., title='Total length (mm)')
+  - length_unit: SizeUnit (default=, default=SizeUnit.MM, title='Length unit')
+
+Model: FiberAssembly
+  - name: str (default=..., title='Fiber assembly name')
+  - manipulator: Manipulator (default=..., title='Manipulator')
+  - fibers: List[FiberProbe] (default=..., title='Probes that are held by this module')
+
+Model: DigitalMicromirrorDevice
+  - device_type: Literal['Digital micromirror device']
+  - max_dmd_patterns: int (default=..., title='Max DMD patterns')
+  - double_bounce_design: bool (default=..., title='Double bounce design')
+  - invert_pixel_values: bool (default=..., title='Invert pixel values')
+  - motion_padding_x: int (default=..., title='Motion padding X (pixels)')
+  - motion_padding_y: int (default=..., title='Motion padding Y (pixels)')
+  - padding_unit: SizeUnit (default=, default=SizeUnit.PX, title='Padding unit')
+  - pixel_size: Decimal (default=..., title='DMD Pixel size')
+  - pixel_size_unit: SizeUnit (default=, default=SizeUnit.UM, title='Pixel size unit')
+  - start_phase: Decimal (default=..., title='DMD Start phase (fraction of cycle)')
+  - dmd_flip: bool (default=..., title='DMD Flip')
+  - dmd_curtain: List[Decimal] (default=..., title='DMD Curtain')
+  - dmd_curtain_unit: SizeUnit (default=, default=SizeUnit.PX, title='dmd_curtain_unit')
+  - line_shear: List[int] (default=..., title='Line shear (pixels)')
+  - line_shear_units: SizeUnit (default=, default=SizeUnit.PX, title='Line shear units')
+
+Model: PolygonalScanner
+  - device_type: Literal['Polygonal scanner']
+  - speed: int (default=..., title='Speed (rpm)')
+  - speed_unit: SpeedUnit (default=, default=SpeedUnit.RPM, title='Speed unit')
+  - number_faces: int (default=..., title='Number of faces')
+
+Model: PockelsCell
+  - device_type: Literal['Pockels cell']
+  - polygonal_scanner: Optional[str] (default=, default=None, title='Polygonal scanner', description='Must match name of Polygonal scanner')
+  - on_time: Optional[Decimal] (default=, default=None, title='On time (fraction of cycle)')
+  - off_time: Optional[Decimal] (default=, default=None, title='Off time (fraction of cycle)')
+  - time_setting_unit: UnitlessUnit (default=, default=UnitlessUnit.FC, title='Time setting unit')
+  - beam_modulation: Optional[Decimal] (default=, default=None, title='Beam modulation (V)')
+  - beam_modulation_unit: VoltageUnit (default=, default=VoltageUnit.V, title='Beam modulation unit')
+
+Model: Enclosure
+  - device_type: Literal['Enclosure']
+  - size: Size3d (default=..., title='Size')
+  - internal_material: str (default=..., title='Internal material')
+  - external_material: str (default=..., title='External material')
+  - grounded: bool (default=..., title='Grounded')
+  - laser_interlock: bool (default=..., title='Laser interlock')
+  - air_filtration: bool (default=..., title='Air filtration')
+
+Model: MousePlatform
+  - device_type: Literal['Mouse platform']
+  - surface_material: Optional[str] (default=, default=None, title='Surface material')
+  - date_surface_replaced: Optional[datetime] (default=, default=None, title='Date surface replaced')
+
+Model: Disc
+  - device_type: Literal['Disc']
+  - radius: Decimal (default=..., title='Radius (cm)', ge=0)
+  - radius_unit: SizeUnit (default=, default=SizeUnit.CM, title='radius unit')
+  - output: Optional[DaqChannelType] (default=, default=None, description='analog or digital electronics')
+  - encoder: Optional[str] (default=, default=None, title='Encoder', description='Encoder hardware type')
+  - decoder: Optional[str] (default=, default=None, title='Decoder', description='Decoder chip type')
+  - encoder_firmware: Optional[Software] (default=, default=None, title='Encoder firmware', description='Firmware to read from decoder chip counts')
+
+Model: Wheel
+  - device_type: Literal['Wheel']
+  - radius: Decimal (default=..., title='Radius (mm)')
+  - width: Decimal (default=..., title='Width (mm)')
+  - size_unit: SizeUnit (default=, default=SizeUnit.MM, title='Size unit')
+  - encoder: Device (default=..., title='Encoder')
+  - encoder_output: Optional[DAQChannel] (default=, default=None, title='Encoder DAQ channel')
+  - pulse_per_revolution: int (default=..., title='Pulse per revolution')
+  - magnetic_brake: Device (default=..., title='Magnetic brake')
+  - brake_output: Optional[DAQChannel] (default=, default=None, title='Brake DAQ channel')
+  - torque_sensor: Device (default=..., title='Torque sensor')
+  - torque_output: Optional[DAQChannel] (default=, default=None, title='Torque DAQ channel')
+
+Model: Tube
+  - device_type: Literal['Tube']
+  - diameter: Decimal (default=..., title='Diameter', ge=0)
+  - diameter_unit: SizeUnit (default=, default=SizeUnit.CM, title='Diameter unit')
+
+Model: Treadmill
+  - device_type: Literal['Treadmill']
+  - treadmill_width: Decimal (default=..., title='Width of treadmill (mm)')
+  - width_unit: SizeUnit (default=, default=SizeUnit.CM, title='Width unit')
+  - encoder: Device (default=..., title='Encoder')
+  - pulse_per_revolution: int (default=..., title='Pulse per revolution')
+
+Model: Arena
+  - device_type: Literal['Arena']
+  - size: Size3d (default=..., title='3D Size')
+  - objects_in_arena: List[Device] (default=, default=[], title='Objects in arena')
+
+Model: Monitor
+  - device_type: Literal['Monitor']
+  - manufacturer: Organization.MONITOR_MANUFACTURERS
+  - refresh_rate: int (default=..., title='Refresh rate (Hz)', ge=60)
+  - width: int (default=..., title='Width (pixels)')
+  - height: int (default=..., title='Height (pixels)')
+  - size_unit: SizeUnit (default=, default=SizeUnit.PX, title='Size unit')
+  - viewing_distance: Decimal (default=..., title='Viewing distance (cm)')
+  - viewing_distance_unit: SizeUnit (default=, default=SizeUnit.CM, title='Viewing distance unit')
+  - position: Optional[RelativePosition] (default=, default=None, title='Relative position of the monitor')
+  - contrast: Optional[int] (default=, default=None, description="Monitor's contrast setting", title='Contrast', ge=0, le=100)
+  - brightness: Optional[int] (default=, default=None, description="Monitor's brightness setting", title='Brightness', ge=0, le=100)
+
+Model: RewardSpout
+  - device_type: Literal['Reward spout']
+  - side: SpoutSide (default=..., title='Spout side', description='If Other use notes')
+  - spout_diameter: Decimal (default=..., title='Spout diameter (mm)')
+  - spout_diameter_unit: SizeUnit (default=, default=SizeUnit.MM, title='Spout diameter unit')
+  - spout_position: Optional[RelativePosition] (default=, default=None, title='Spout stage position')
+  - solenoid_valve: Device (default=..., title='Solenoid valve')
+  - lick_sensor: Device (default=..., title='Lick sensor')
+  - lick_sensor_type: Optional[LickSensorType] (default=, default=None, title='Lick sensor type')
+  - notes: Optional[str] (default=, default=None, title='Notes')
+
+Model: RewardDelivery
+  - device_type: Literal['Reward delivery']
+  - stage_type: Optional[MotorizedStage] (default=, default=None, title='Motorized stage')
+  - reward_spouts: List[RewardSpout] (default=..., title='Water spouts')
+
+Model: Speaker
+  - device_type: Literal['Speaker']
+  - manufacturer: Organization.SPEAKER_MANUFACTURERS
+  - position: Optional[RelativePosition] (default=, default=None, title='Relative position of the speaker')
+
+Model: OlfactometerChannel
+  - channel_index: int (default=..., title='Channel index')
+  - channel_type: ChannelType (default=, default=ChannelType.ODOR, title='Channel type')
+  - flow_capacity: Literal[100, 1000] (default=, default=100, title='Flow capacity')
+  - flow_unit: str (default=, default='mL/min', title='Flow unit')
+
+Model: Olfactometer
+  - device_type: Literal['Olfactometer']
+  - manufacturer: Organization.DAQ_DEVICE_MANUFACTURERS (default=, default=Organization.CHAMPALIMAUD)
+  - harp_device_type: Annotated[Union[type(HarpDeviceType.OLFACTOMETER)], Field(default=HarpDeviceType.OLFACTOMETER, discriminator='name')]
+  - channels: List[OlfactometerChannel]
+
+Model: AdditionalImagingDevice
+  - device_type: Literal['Additional imaging device']
+  - imaging_device_type: ImagingDeviceType (default=..., title='Device type')
+
+Model: ScanningStage
+  - stage_axis_direction: StageAxisDirection (default=..., title='Direction of stage axis')
+  - stage_axis_name: StageAxisName (default=..., title='Name of stage axis')
+
+Model: OpticalTable
+  - device_type: Literal['Optical table']
+  - length: Optional[Decimal] (default=, default=None, title='Length (inches)', ge=0)
+  - width: Optional[Decimal] (default=, default=None, title='Width (inches)', ge=0)
+  - table_size_unit: SizeUnit (default=, default=SizeUnit.IN, title='Table size unit')
+  - vibration_control: Optional[bool] (default=, default=None, title='Vibration control')
+
+Model: Scanner
+  - device_type: Literal['Scanner']
+  - scanner_location: ScannerLocation (default=..., title='Scanner location')
+  - magnetic_strength: MagneticStrength (default=..., title='Magnetic strength (T)')
+  - magnetic_strength_unit: str (default=, default='T', title='Magnetic strength unit')
+
+Model: MyomatrixArray
+  - device_type: Literal['Myomatrix Array']
+  - array_type: MyomatrixArrayType (default=..., title='Array type')
+
+Model: CoordinateTransform
+  - type: str (default=..., title='transformation type')
+
+Model: Scale3dTransform
+  - type: Literal['scale']
+  - scale: List[Decimal] (default=..., title='3D scale parameters', min_length=3, max_length=3)
+
+Model: Translation3dTransform
+  - type: Literal['translation']
+  - translation: List[Decimal] (default=..., title='3D translation parameters', min_length=3, max_length=3)
+
+Model: Rotation3dTransform
+  - type: Literal['rotation']
+  - rotation: List[Decimal] (default=..., title='3D rotation matrix values (3x3) ', min_length=9, max_length=9)
+
+Model: Affine3dTransform
+  - type: Literal['affine']
+  - affine_transform: List[Decimal] (default=..., title='Affine transform matrix values (top 3x4 matrix)', min_length=12, max_length=12)
+
+Model: Size2d
+  - width: int (default=..., title='Width')
+  - height: int (default=..., title='Height')
+  - unit: SizeUnit (default=SizeUnit.PX, title='Size unit')
+
+Model: Size3d
+  - width: int (default=..., title='Width')
+  - length: int (default=..., title='Length')
+  - height: int (default=..., title='Height')
+  - unit: SizeUnit (default=SizeUnit.M, title='Size unit')
+
+Model: Orientation3d
+  - pitch: Decimal (default=..., title='Angle pitch', ge=0, le=360)
+  - yaw: Decimal (default=..., title='Angle yaw', ge=0, le=360)
+  - roll: Decimal (default=..., title='Angle roll', ge=0, le=360)
+  - unit: AngleUnit (default=AngleUnit.DEG, title='Angle unit')
+
+Model: ModuleOrientation2d
+  - arc_angle: Decimal (default=..., title='Arc angle')
+  - module_angle: Decimal (default=..., title='Module angle')
+  - unit: AngleUnit (default=AngleUnit.DEG, title='Angle unit')
+
+Model: ModuleOrientation3d
+  - arc_angle: Decimal (default=..., title='Arc angle')
+  - module_angle: Decimal (default=..., title='Module angle')
+  - rotation_angle: Decimal (default=..., title='Rotation angle')
+  - unit: AngleUnit (default=AngleUnit.DEG, title='Angle unit')
+
+Model: Coordinates3d
+  - x: Decimal (default=..., title='Position X')
+  - y: Decimal (default=..., title='Position Y')
+  - z: Decimal (default=..., title='Position Z')
+  - unit: SizeUnit (default=SizeUnit.UM, title='Position unit')
+
+Model: CcfCoords
+  - ml: Decimal (default=..., title='ML')
+  - ap: Decimal (default=..., title='AP')
+  - dv: Decimal (default=..., title='DV')
+  - unit: SizeUnit (default=SizeUnit.UM, title='Coordinate unit')
+  - ccf_version: CcfVersion (default=CcfVersion.CCFv3, title='CCF version')
+
+Model: Axis
+  - name: AxisName (default=..., title='Axis')
+  - direction: str (default=..., title='Direction as the value of axis increases.')
+
+Model: ImageAxis
+  - name: AxisName (default=..., title='Name')
+  - dimension: int (default=..., description='Reference axis number for stitching', title='Dimension')
+  - direction: AnatomicalDirection (default=..., description='Tissue direction as the value of axis increases. If Other describe in notes.')
+  - unit: SizeUnit (default=SizeUnit.UM, title='Axis physical units')
+
+Model: RelativePosition
+  - device_position_transformations: List[Annotated[Union[Translation3dTransform, Rotation3dTransform], Field(discriminator='type')]] (default=..., title='Device position transforms')
+  - device_origin: str (default=..., title='Device origin', description='Reference point on device for position information')
+  - device_axes: List[Axis] (default=..., title='Device axes', min_length=3, max_length=3)
+  - notes: Optional[str] (default=, default=None, title='Notes')

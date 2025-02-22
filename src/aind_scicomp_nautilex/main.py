@@ -2,6 +2,8 @@ import os
 import requests
 import json
 from typing import List, Dict
+import boto3
+from botocore.config import Config
 
 
 def load_schema_context(file: str) -> str:
@@ -138,12 +140,16 @@ def analyze_issues_with_bedrock(issues: List[Dict], system_prompt: str) -> List[
     Returns:
         List of Claude's responses as strings
     """
-    try:
-        import boto3
-    except ImportError:
-        raise ImportError("boto3 is required to use Bedrock. Please install it.")
         
-    bedrock = boto3.client('bedrock-runtime')
+    # Create bedrock client with increased timeout
+    config = Config(
+        region_name='us-west-2',
+        connect_timeout=20,  # a short time
+        read_timeout=2400,     # a long time
+        retries={'max_attempts': 1}
+    )
+    bedrock = boto3.client('bedrock-runtime', config=config)
+    
     responses = []
     
     for issue in issues:
@@ -156,7 +162,7 @@ def analyze_issues_with_bedrock(issues: List[Dict], system_prompt: str) -> List[
         # Call Bedrock Claude
         body = {
             "prompt": f"\n\nHuman: {prompt}\n\nAssistant:",
-            "max_tokens_to_sample": 2048,
+            "max_tokens_to_sample": 100000,
             "temperature": 0.5,
             "anthropic_version": "bedrock-2023-05-31"
         }

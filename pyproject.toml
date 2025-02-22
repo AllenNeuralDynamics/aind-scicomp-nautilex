@@ -17,6 +17,8 @@ readme = "README.md"
 dynamic = ["version"]
 
 dependencies = [
+    'requests',
+    'boto3',
 ]
 
 [project.optional-dependencies]

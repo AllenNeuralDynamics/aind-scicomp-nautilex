@@ -8,6 +8,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from aind_scicomp_nautilex.lc_tools import query_docdb
 from langchain_aws import ChatBedrock
+import datetime
 
 
 def load_schema_context(file: str) -> str:
@@ -101,7 +102,6 @@ def post_github_comment(issue_number: int, comment: str,
     response = requests.post(url, headers=headers, json=data)
     if response.status_code != 201:
         raise Exception(f"Failed to post comment: {response.status_code}, {response.text}")
-
 
 
 def explore_issues_with_bedrock(issues: List[Dict], system_prompt: str) -> List[str]:

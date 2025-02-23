@@ -4,6 +4,8 @@ import json
 from typing import List, Dict
 import boto3
 from botocore.config import Config
+from datetime import datetime
+import base64
 
 
 def load_schema_context(file: str) -> str:
@@ -14,7 +16,6 @@ def load_schema_context(file: str) -> str:
 
 schema_context = load_schema_context("schema_context.txt")
 models_context = load_schema_context("models_context.txt")
-
 
 
 system_prompt=f"""
@@ -129,6 +130,85 @@ def get_github_issues(repo_owner: str = "AllenNeuralDynamics",
     return response.json()
 
 
+def create_pr_with_script(file_contents: str, issue_number: int,
+                         repo_owner: str = "AllenNeuralDynamics",
+                         repo_name: str = "aind-scicomp-nautilex") -> None:
+    """
+    Creates a new branch, adds a timestamped script folder with run.py,
+    and opens a PR linked to the issue.
+    
+    Args:
+        file_contents: Contents to write to run.py
+        issue_number: GitHub issue number to link the PR to
+        repo_owner: The owner of the repository
+        repo_name: The name of the repository
+    """
+    token = os.getenv("GITHUB_ACCESS_TOKEN")
+    if not token:
+        raise ValueError("GitHub access token not found in environment variables")
+        
+    # Add debugging to check token and response
+    headers = {
+        "Authorization": f"Bearer {token}",  # Changed from "token" to "Bearer"
+        "Accept": "application/vnd.github.v3+json"
+    }
+
+    # Get default branch
+    url = f"https://api.github.com/repos/{repo_owner}/{repo_name}"
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        print(f"GitHub API Response: {response.text}")  # Add debug logging
+        raise Exception(f"Failed to get repo info: {response.status_code}")
+    default_branch = response.json()["default_branch"]
+
+    # Create new branch name with timestamp
+    timestamp = datetime.datetime.now().isoformat().replace(":", "-")
+    branch_name = f"fix/issue-{issue_number}-{timestamp}"
+    
+    # Get default branch SHA
+    url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/git/refs/heads/{default_branch}"
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        raise Exception(f"Failed to get SHA: {response.status_code}")
+    sha = response.json()["object"]["sha"]
+
+    # Create new branch
+    url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/git/refs"
+    data = {
+        "ref": f"refs/heads/{branch_name}",
+        "sha": sha
+    }
+    response = requests.post(url, headers=headers, json=data)
+    if response.status_code != 201:
+        raise Exception(f"Failed to create branch: {response.status_code}")
+
+    # Create file
+    folder_name = f"scripts/{timestamp}"
+    file_path = f"{folder_name}/run.py"
+    url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/contents/{file_path}"
+    
+    data = {
+        "message": f"Add script for issue #{issue_number}",
+        "content": base64.b64encode(file_contents.encode()).decode(),
+        "branch": branch_name
+    }
+    response = requests.put(url, headers=headers, json=data)
+    if response.status_code != 201:
+        raise Exception(f"Failed to create file: {response.status_code}")
+
+    # Create PR
+    url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/pulls"
+    data = {
+        "title": f"Fix for issue #{issue_number}",
+        "body": f"Resolves #{issue_number}",
+        "head": branch_name,
+        "base": default_branch
+    }
+    response = requests.post(url, headers=headers, json=data)
+    if response.status_code != 201:
+        raise Exception(f"Failed to create PR: {response.status_code}")
+
+
 def analyze_issues_with_bedrock(issues: List[Dict], system_prompt: str) -> List[str]:
     """
     Analyze GitHub issues using Amazon Bedrock Claude model.
@@ -180,6 +260,9 @@ def analyze_issues_with_bedrock(issues: List[Dict], system_prompt: str) -> List[
         
         response_body = json.loads(response['body'].read())
         run_py_str = response_body['content'][0]['text']  # Updated response parsing
+
+        create_pr_with_script(run_py_str, issue['number'])
+
         responses.append(run_py_str)
         
     return responses
@@ -187,6 +270,7 @@ def analyze_issues_with_bedrock(issues: List[Dict], system_prompt: str) -> List[
 if __name__ == "__main__":
     try:
         issues = get_github_issues()
+        issues = [issues[0]]
         for issue in issues:
             print(f"Issue #{issue['number']}: {issue['title']}")
             print(f"State: {issue['state']}")
@@ -201,3 +285,4 @@ if __name__ == "__main__":
     
     except Exception as e:
         print(f"Error: {str(e)}")
+        raise e

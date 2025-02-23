@@ -230,7 +230,7 @@ if __name__ == "__main__":
     try:
         # Get and display all issues
         issues = get_github_issues()
-        issues = [issues[-1]]
+        issues = [issues[0]]
         print("\nFetched GitHub Issues:")
         for issue in issues:
             print(f"Issue #{issue['number']}: {issue['title']}")

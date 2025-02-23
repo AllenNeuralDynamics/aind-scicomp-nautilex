@@ -126,7 +126,7 @@ def explore_issues_with_bedrock(issues: List[Dict], system_prompt: str) -> List[
     # Create prompt templates for each step
     query_prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompt + """
-        Based on the issue description, create a MongoDB filter query (without any projections, aggregations, or modifications) that will help identify affected records.
+        Based on the issue description, create a filter query dictionary (for mongodb, without any projections, aggregations, or modifications) that will help identify affected records.
         
         For example, a query to find all records with the funder "PGA" could be done with 
         {{
@@ -136,7 +136,8 @@ def explore_issues_with_bedrock(issues: List[Dict], system_prompt: str) -> List[
             }}
             }}
         }}
-        Respond now with a simple filter query that will find the affected records. Note that the `Metadata` class containing the seven subfiles is what's stored in each record therefore you should NOT start your queries with "metadata". Queries in our database should always use the pattern "file.field.subfield" (etc, as necessary). Your query should not use any special mongodb features that require the $ symbol. 
+
+        Note that each record stores the model_dump() of the `Metadata` class containing the seven subfiles, therefore you should NOT start your queries with "metadata". Queries in our database should always use the pattern "file.field.subfield" (etc, as necessary). Make sure to generate queries in PYTHON style, i.e. using True and None (not true and null)
 
         Format your response as a JSON object with a single key 'query' containing the MongoDB query dictionary. Do not include any other text in your response.
         """),
@@ -172,49 +173,36 @@ def explore_issues_with_bedrock(issues: List[Dict], system_prompt: str) -> List[
         
         # Step 2: Execute query
         print("\nStep 2: Executing query against database...")
+
         db_results = query_docdb({
             "query": query_result['query'],
         })
         print(f"Found {len(db_results)} matching records")
 
         if len(db_results) == 0:
-            # Query failed, retry
-            print("\nNo results found. Retrying with simplified query...")
-            retry_prompt = ChatPromptTemplate.from_messages([
-                ("system", """The original query returned no results. Please generate a simplified version of the query that is more likely to match records.
-                Format your response as a JSON object with a single key 'query' containing the MongoDB query dictionary. Do not include any other text in your response.
-                Consider:
-                - Using fewer filter conditions
-                - Checking if field names are correct
-                - Using simpler MongoDB operators
-                - Broadening the search criteria"""),
-                ("user", f"Original query: {json.dumps(query_result['query'], indent=2)}\nIssue: {issue_content}")
-            ])
-            
-            retry_chain = retry_prompt | llm | json_parser
-            retry_query = retry_chain.invoke({})
-            print(f"Retrying with query: {json.dumps(retry_query['query'], indent=2)}")
-            
-            db_results = query_docdb({
-                "query": retry_query['query']
-            })
-            print(f"Found {len(db_results)} matching records after retry")
-            
-            if len(db_results) == 0:
-                print("Warning: Still no results found after retry")
-                raise ValueError("Unable to generate valid query")
+            raise ValueError("Failed to generate valid query")
+        
+        num_records = len(db_results)
 
-        if len(db_results) > 5:
-            db_results = db_results[:5]
+        # Keep results under 1KB while ensuring at least one result
+        total_bytes = 0
+        truncated_results = []
+        for result in db_results:
+            result_bytes = len(str(result).encode('utf-8'))
+            if total_bytes + result_bytes > (1024*10) and len(truncated_results) >= 1:
+                break
+            truncated_results.append(result)
+            total_bytes += result_bytes
+        db_results = truncated_results
         
         # Step 3: Analyze results and generate response
         print("\nStep 3: Analyzing results...")
-        print(f"\n\nFound {len(db_results)} records:\n\n{db_results}")
+        print(f"\n\nFound {num_records} sending records:\n\n{db_results}")
         analysis_chain = analysis_prompt | llm
         analysis = analysis_chain.invoke({
             "issue_content": issue_content,
             "query_results": db_results,
-            "query_len": len(db_results),
+            "query_len": num_records,
         })
         print("Analysis complete")
         

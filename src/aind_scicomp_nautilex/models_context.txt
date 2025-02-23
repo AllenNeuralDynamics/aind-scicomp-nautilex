@@ -1,0 +1,46 @@
+Model: StrainModel
+  - name: str
+  - species: str
+  - registry: Registry.ONE_OF
+  - registry_identifier: str
+
+Model: SpeciesModel
+  - name: str
+  - registry: Registry.ONE_OF
+  - registry_identifier: str
+
+Model: ExpectedFilesModel
+  - name: str
+  - modality_abbreviation: str
+  - subject: FileRequirement
+  - data_description: FileRequirement
+  - procedures: FileRequirement
+  - processing: FileRequirement
+  - acquisition: FileRequirement
+  - instrument: FileRequirement
+  - quality_control: FileRequirement
+
+Model: BaseName
+  - name: str (default=..., title='Name')
+  - abbreviation: Optional[str] (default=, default=None, title='Abbreviation')
+
+Model: HarpDeviceTypeModel
+  - whoami: int (default=..., title='Harp whoami value')
+  - name: str (default=..., title='Harp device type name')
+
+Model: OrganizationModel
+  - name: str
+  - abbreviation: str
+  - registry: Registry.ONE_OF
+  - registry_identifier: str
+
+Model: BrainStructureModel
+  - atlas: str
+  - name: str
+  - acronym: str
+  - id: str
+
+Model: MouseAnatomyModel
+  - name: str
+  - registry: Registry.ONE_OF
+  - registry_identifier: str

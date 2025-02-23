@@ -17,6 +17,11 @@ readme = "README.md"
 dynamic = ["version"]
 
 dependencies = [
+    'requests',
+    'boto3',
+    'pydantic',
+    'langchain',
+    'aind-data-access-api[docdb]',
 ]
 
 [project.optional-dependencies]

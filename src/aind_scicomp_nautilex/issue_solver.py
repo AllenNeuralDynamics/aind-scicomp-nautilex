@@ -162,7 +162,7 @@ def create_pr_with_script(file_contents: str, issue_number: int,
     default_branch = response.json()["default_branch"]
 
     # Create new branch name with timestamp
-    timestamp = datetime.datetime.now().isoformat().replace(":", "-")
+    timestamp = datetime.now().isoformat().replace(":", "-")
     branch_name = f"fix/issue-{issue_number}-{timestamp}"
     
     # Get default branch SHA

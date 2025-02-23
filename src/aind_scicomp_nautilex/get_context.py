@@ -11,6 +11,10 @@ def _extract_fields_from_class_node(node):
             field_name = subnode.target.id
             field_type = ast.unparse(subnode.annotation)
 
+            # Skip the describedBy and schema_version fields for core models
+            if field_name == "describedBy" or field_name == "schema_version" or field_name == "_DESCRIBED_BY_URL":
+                continue
+
             # Extract field constraints if using Field(...)
             default_value = ""
             if subnode.value and isinstance(subnode.value, ast.Call):

@@ -12,8 +12,8 @@ def load_schema_context(file: str) -> str:
     with open(schema_file, "r", encoding="utf-8") as f:
         return f.read()
 
-schema_context = load_schema_context("aind_data_schema_context.txt")
-models_context = load_schema_context("aind_data_schema_models_context.txt")
+schema_context = load_schema_context("schema_context.txt")
+models_context = load_schema_context("models_context.txt")
 
 
 

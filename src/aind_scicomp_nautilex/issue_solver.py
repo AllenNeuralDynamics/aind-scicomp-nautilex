@@ -270,7 +270,7 @@ def analyze_issues_with_bedrock(issues: List[Dict], system_prompt: str) -> List[
 if __name__ == "__main__":
     try:
         issues = get_github_issues()
-        issues = [issues[0]]
+        issues = [issues[-1]]
         for issue in issues:
             print(f"Issue #{issue['number']}: {issue['title']}")
             print(f"State: {issue['state']}")

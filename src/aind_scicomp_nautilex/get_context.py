@@ -32,9 +32,17 @@ def extract_pydantic_models_from_file(filepath):
     for node in tree.body:
         if isinstance(node, ast.ClassDef):
             model_name = node.name
+
+            # Skip if class inherits from anything other than BaseModel
+            if node.bases:
+                base = node.bases[0]
+                parent_class = base.id
+            else:
+                parent_class = None
+
             fields = _extract_fields_from_class_node(node)
             if fields:  # Only add classes that have annotated fields
-                models.append((model_name, fields))
+                models.append((model_name, parent_class, fields))
 
     return models
 
@@ -58,7 +66,7 @@ def extract_top_level_pydantic_models_from_file(filepath):
             model_name = node.name
             fields = _extract_fields_from_class_node(node)
             if fields:  # Only add classes that have annotated fields
-                models.append((model_name, fields))
+                models.append((model_name, None, fields))
 
     return models
 
@@ -78,8 +86,8 @@ def flatten_pydantic_models(src_folder, get_all_models: bool):
 
     # Format output for LLM context
     output = []
-    for model_name, fields in all_models:
-        output.append(f"Model: {model_name}\n" + "\n".join(f"  - {field}" for field in fields))
+    for model_name, parent_class, fields in all_models:
+        output.append(f"Model: {model_name}{'(' + parent_class + ')' if parent_class else ''}\n" + "\n".join(f"  - {field}" for field in fields))
     return "\n\n".join(output)
 
 if __name__ == "__main__":

@@ -21,6 +21,7 @@ dependencies = [
     'boto3',
     'pydantic',
     'langchain',
+    'langchain_aws',
     'aind-data-access-api[docdb]',
 ]
 

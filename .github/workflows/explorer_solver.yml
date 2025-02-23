@@ -40,7 +40,7 @@ jobs:
         python -m aind_scicomp_nautilex.issue_explorer
     
     - name: Wait for Explorer to Complete
-      run: sleep 30
+      run: sleep 5
     
     - name: Run Issue Solver
       env:

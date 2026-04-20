@@ -1,3 +1,5 @@
+# This repo has been archived
+
 # aind-scicomp-nautilex
 
 [![License](https://img.shields.io/badge/license-MIT-brightgreen)](LICENSE)
